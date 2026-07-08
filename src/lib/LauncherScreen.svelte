@@ -1,0 +1,579 @@
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import SettingsDrawer from './SettingsDrawer.svelte';
+
+  export let nickname: string;
+
+  const dispatch = createEventDispatcher<{ logout: void }>();
+
+  let settingsOpen = false;
+
+  type Status = 'idle' | 'downloading' | 'playing';
+  let status: Status = 'idle';
+
+  let progress = 0; // 0..100
+  let currentFile = '';
+  let speed = 0; // MB/s
+  let downloadedMB = 0;
+  let totalMB = 0;
+
+  let interval: ReturnType<typeof setInterval> | null = null;
+
+  const files = [
+    'assets/objects/0a/1f2c3d.jar',
+    'libraries/net/minecraft/client.jar',
+    'libraries/org/lwjgl/lwjgl-opengl.jar',
+    'assets/objects/4b/9e8a7d.png',
+    'libraries/com/mojang/authlib.jar',
+    'assets/objects/7c/3d1e5f.json',
+    'libraries/net/java/dev/jna.jar',
+    'assets/objects/2a/8b9c0d.ogg',
+    'libraries/org/lwjgl/lwjgl-glfw.jar',
+    'assets/objects/9f/1a2b3c.png',
+    'libraries/com/google/guava/guava.jar',
+    'assets/objects/5e/6f7a8b.json',
+    'libraries/io/netty/netty-all.jar',
+    'assets/objects/3b/4c5d6e.png',
+    'libraries/org/lwjgl/lwjgl-stb.jar',
+  ];
+
+  function play() {
+    if (status === 'idle') {
+      startDownload();
+    } else if (status === 'playing') {
+      status = 'idle';
+      progress = 0;
+      currentFile = '';
+      speed = 0;
+      downloadedMB = 0;
+      totalMB = 0;
+    }
+  }
+
+  function startDownload() {
+    status = 'downloading';
+    progress = 0;
+    downloadedMB = 0;
+    totalMB = 847.3;
+    let fileIdx = 0;
+    currentFile = files[0];
+
+    interval = setInterval(() => {
+      const chunk = Math.random() * 3.5 + 0.8;
+      downloadedMB = Math.min(downloadedMB + chunk, totalMB);
+      progress = (downloadedMB / totalMB) * 100;
+      speed = chunk * 12 + Math.random() * 2;
+
+      if (Math.random() > 0.7) {
+        fileIdx = Math.min(fileIdx + 1, files.length - 1);
+        currentFile = files[fileIdx];
+      }
+
+      if (downloadedMB >= totalMB) {
+        if (interval) clearInterval(interval);
+        interval = null;
+        status = 'playing';
+        currentFile = '';
+        speed = 0;
+      }
+    }, 120);
+  }
+
+  function formatMB(mb: number) {
+    if (mb < 1) return mb.toFixed(2);
+    return mb.toFixed(1);
+  }
+
+  function logout() {
+    if (interval) clearInterval(interval);
+    dispatch('logout');
+  }
+
+  function openSettings() {
+    settingsOpen = true;
+  }
+
+  function closeSettings() {
+    settingsOpen = false;
+  }
+</script>
+
+<div class="launcher" in:fade>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-grand">GRAND</span>
+      <span class="brand-eden">EDEN</span>
+    </div>
+    <div class="server-status">
+      <span class="dot" />
+      <span class="status-text">Сервер онлайн</span>
+      <span class="players">· 247 / 500</span>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="hero">
+      <div class="hero-text">
+        <div class="hero-label">ПРОЕКТ</div>
+        <h1 class="hero-title">Grand Eden</h1>
+        <p class="hero-desc">
+          Выживание, экономика и приключения в одном мире. Присоединяйся к сообществу.
+        </p>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <span class="meta-label">Версия</span>
+          <span class="meta-value">1.20.4</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Пинг</span>
+          <span class="meta-value">12 ms</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">TPS</span>
+          <span class="meta-value">20.0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Play section -->
+    <div class="play-section">
+      {#if status === 'idle'}
+        <button class="play-btn" on:click={play}>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <span>Играть</span>
+        </button>
+        <div class="play-sub">Готово к запуску</div>
+      {:else if status === 'downloading'}
+        <button class="play-btn downloading" disabled>
+          <div class="spinner" />
+          <span>Загрузка...</span>
+        </button>
+        <div class="download-area">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {progress}%" />
+          </div>
+          <div class="progress-info">
+            <span class="progress-file" title={currentFile}>{currentFile}</span>
+            <span class="progress-percent">{progress.toFixed(1)}%</span>
+          </div>
+          <div class="progress-stats">
+            <span>{formatMB(downloadedMB)} / {formatMB(totalMB)} МБ</span>
+            <span>{speed.toFixed(1)} МБ/с</span>
+          </div>
+        </div>
+      {:else if status === 'playing'}
+        <button class="play-btn playing" on:click={play}>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+          <span>Запущено</span>
+        </button>
+        <div class="play-sub">Игра запущена — приятной игры!</div>
+      {/if}
+    </div>
+  </main>
+
+  <!-- Bottom bar -->
+  <footer class="bottombar">
+    <div class="user" on:click={openSettings} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && openSettings()}>
+      <div class="avatar">{nickname.charAt(0).toUpperCase()}</div>
+      <div class="user-info">
+        <span class="user-name">{nickname}</span>
+        <span class="user-role">Игрок</span>
+      </div>
+      <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <div class="links">
+      <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
+      <span class="sep" />
+      <a href="https://t.me" target="_blank" rel="noreferrer">Telegram</a>
+      <span class="sep" />
+      <a href="https://grand-eden.ru" target="_blank" rel="noreferrer">Сайт</a>
+    </div>
+  </footer>
+</div>
+
+<SettingsDrawer
+  bind:open={settingsOpen}
+  {nickname}
+  on:close={closeSettings}
+  on:logout={logout}
+/>
+
+<script context="module" lang="ts">
+  import { fade } from 'svelte/transition';
+</script>
+
+<style>
+  .launcher {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 32px;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: 0.02em;
+  }
+
+  .brand-grand {
+    color: var(--text);
+  }
+
+  .brand-eden {
+    color: var(--text-secondary);
+  }
+
+  .server-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3ddc84;
+    box-shadow: 0 0 8px rgba(61, 220, 132, 0.5);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .players {
+    color: var(--text-tertiary);
+  }
+
+  /* Main */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 48px;
+    padding: 32px 0;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    text-align: center;
+    max-width: 600px;
+  }
+
+  .hero-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .hero-desc {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 420px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  .meta-value {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Play section */
+  .play-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .play-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 18px 32px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-radius: 14px;
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .play-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .play-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .play-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .play-btn.downloading {
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .play-btn.playing {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    box-shadow: none;
+  }
+
+  .play-btn.playing:hover {
+    background: var(--bg-surface-hover);
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--accent-contrast);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    opacity: 0.5;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .play-sub {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+  }
+
+  /* Download area */
+  .download-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-elevated);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.12s linear;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+  }
+
+  .progress-file {
+    color: var(--text-tertiary);
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+  }
+
+  .progress-percent {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Bottom bar */
+  .bottombar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 10px 6px 6px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .user:hover {
+    background: var(--bg-surface-hover);
+  }
+
+  .settings-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-tertiary);
+    transition: color 0.15s ease, transform 0.3s ease;
+  }
+
+  .user:hover .settings-icon {
+    color: var(--text);
+    transform: rotate(45deg);
+  }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .user-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .user-role {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+  }
+
+  .links {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .links a {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .links a:hover {
+    color: var(--text);
+  }
+
+  .sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+  }
+
+  @media (max-width: 640px) {
+    .launcher {
+      padding: 20px 20px;
+    }
+    .hero-meta {
+      gap: 20px;
+    }
+    .bottombar .links {
+      display: none;
+    }
+  }
+</style>
