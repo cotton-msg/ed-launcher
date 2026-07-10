@@ -28,8 +28,7 @@
 <div class="intro" class:started bind:this={container}>
   <div class="intro-content">
     <div class="logo-wrap" bind:this={logoText}>
-      <span class="logo-grand">GRAND</span>
-      <span class="logo-eden">EDEN</span>
+      <img src="/logo.png" alt="Grand Eden" class="logo-img" />
     </div>
     <div class="line-wrap">
       <div class="line" bind:this={line} />
@@ -60,36 +59,23 @@
 
   .logo-wrap {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    line-height: 0.9;
+    justify-content: center;
     overflow: hidden;
   }
 
-  .logo-grand,
-  .logo-eden {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: 0.02em;
+  .logo-img {
+    height: clamp(120px, 20vw, 200px);
+    width: auto;
     opacity: 0;
-    transform: translateY(40px);
+    transform: translateY(40px) scale(0.9);
     transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
       transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .logo-grand {
-    font-size: clamp(2.5rem, 7vw, 5rem);
-  }
-
-  .logo-eden {
-    font-size: clamp(2.5rem, 7vw, 5rem);
-    transition-delay: 0.15s;
-  }
-
-  .started .logo-grand,
-  .started .logo-eden {
+  .started .logo-img {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 
   .line-wrap {

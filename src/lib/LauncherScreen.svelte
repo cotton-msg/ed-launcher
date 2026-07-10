@@ -1,45 +1,73 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import SettingsDrawer from './SettingsDrawer.svelte';
+  import { checkServerStatus, downloadGame, launchGame, onDownloadProgress } from './tauri-api';
+  import { open } from '@tauri-apps/plugin-shell';
+  import type { LauncherSettings, ServerStatus, DownloadProgress } from './tauri-api';
 
   export let nickname: string;
+  export let settings: LauncherSettings;
 
   const dispatch = createEventDispatcher<{ logout: void }>();
 
   let settingsOpen = false;
+  let serverStatus: ServerStatus = {
+    online: false,
+    players: 0,
+    max_players: 500,
+    version: '1.20.4',
+    ping_ms: 0,
+    tps: 0,
+  };
 
   type Status = 'idle' | 'downloading' | 'playing';
   let status: Status = 'idle';
-
-  let progress = 0; // 0..100
+  let progress = 0;
   let currentFile = '';
-  let speed = 0; // MB/s
+  let speed = 0;
   let downloadedMB = 0;
   let totalMB = 0;
+  let error = '';
 
-  let interval: ReturnType<typeof setInterval> | null = null;
+  let statusInterval: ReturnType<typeof setInterval> | null = null;
+  let unlistenProgress: (() => void) | null = null;
 
-  const files = [
-    'assets/objects/0a/1f2c3d.jar',
-    'libraries/net/minecraft/client.jar',
-    'libraries/org/lwjgl/lwjgl-opengl.jar',
-    'assets/objects/4b/9e8a7d.png',
-    'libraries/com/mojang/authlib.jar',
-    'assets/objects/7c/3d1e5f.json',
-    'libraries/net/java/dev/jna.jar',
-    'assets/objects/2a/8b9c0d.ogg',
-    'libraries/org/lwjgl/lwjgl-glfw.jar',
-    'assets/objects/9f/1a2b3c.png',
-    'libraries/com/google/guava/guava.jar',
-    'assets/objects/5e/6f7a8b.json',
-    'libraries/io/netty/netty-all.jar',
-    'assets/objects/3b/4c5d6e.png',
-    'libraries/org/lwjgl/lwjgl-stb.jar',
-  ];
+  async function refreshStatus() {
+    try {
+      serverStatus = await checkServerStatus();
+    } catch {}
+  }
 
-  function play() {
+  onMount(async () => {
+    try {
+      const fs = await import('@tauri-apps/plugin-fs');
+      const logPath = 'C:\\Users\\supminer\\.minecraft\\onmount_debug.log';
+      await fs.writeTextFile(logPath, `onMount started\nstatus: ${status}\n`);
+    } catch (e) {
+      console.error('Failed to log onMount:', e);
+    }
+    
+    await refreshStatus();
+    statusInterval = setInterval(refreshStatus, 30000);
+
+    unlistenProgress = await onDownloadProgress((p: DownloadProgress) => {
+      progress = p.progress;
+      currentFile = p.file;
+      downloadedMB = p.downloaded_mb;
+      totalMB = p.total_mb;
+      speed = p.speed_mb_s;
+    });
+  });
+
+  onDestroy(() => {
+    if (statusInterval) clearInterval(statusInterval);
+    if (unlistenProgress) unlistenProgress();
+  });
+
+  async function play() {
+    error = '';
     if (status === 'idle') {
-      startDownload();
+      await startDownload();
     } else if (status === 'playing') {
       status = 'idle';
       progress = 0;
@@ -50,47 +78,66 @@
     }
   }
 
-  function startDownload() {
+  async function startDownload() {
+    const log = async (msg: string) => {
+      try {
+        const fs = await import('@tauri-apps/plugin-fs');
+        const logPath = 'C:\\Users\\supminer\\.minecraft\\frontend_debug.log';
+        const time = new Date().toISOString();
+        await fs.appendTextFile(logPath, `[${time}] ${msg}\n`);
+      } catch (e) {
+        console.error('Failed to log:', e);
+      }
+    };
+
+    await log('startDownload called');
     status = 'downloading';
     progress = 0;
     downloadedMB = 0;
-    totalMB = 847.3;
-    let fileIdx = 0;
-    currentFile = files[0];
+    totalMB = 0;
+    currentFile = '';
 
-    interval = setInterval(() => {
-      const chunk = Math.random() * 3.5 + 0.8;
-      downloadedMB = Math.min(downloadedMB + chunk, totalMB);
-      progress = (downloadedMB / totalMB) * 100;
-      speed = chunk * 12 + Math.random() * 2;
-
-      if (Math.random() > 0.7) {
-        fileIdx = Math.min(fileIdx + 1, files.length - 1);
-        currentFile = files[fileIdx];
-      }
-
-      if (downloadedMB >= totalMB) {
-        if (interval) clearInterval(interval);
-        interval = null;
+    try {
+      await log('Calling downloadGame...');
+      const success = await downloadGame(settings.game_path);
+      await log(`downloadGame result: ${success}`);
+      if (success) {
         status = 'playing';
-        currentFile = '';
-        speed = 0;
+        try {
+          await log('Calling launchGame...');
+          await launchGame(nickname, settings);
+          await log('launchGame completed');
+        } catch (e) {
+          await log(`launchGame error: ${e}`);
+          error = `Failed to launch: ${e}`;
+          status = 'idle';
+        }
       }
-    }, 120);
+    } catch (e) {
+      await log(`downloadGame error: ${e}`);
+      error = `Download failed: ${e}`;
+      status = 'idle';
+    }
   }
 
   function formatMB(mb: number) {
-    if (mb < 1) return mb.toFixed(2);
+    if (mb < 1 && mb > 0) return mb.toFixed(2);
+    if (mb === 0) return '0';
     return mb.toFixed(1);
   }
 
   function logout() {
-    if (interval) clearInterval(interval);
     dispatch('logout');
   }
 
   function openSettings() {
     settingsOpen = true;
+  }
+
+  async function openLink() {
+    try {
+      await open('https://t.me/supminerr');
+    } catch {}
   }
 
   function closeSettings() {
@@ -99,59 +146,44 @@
 </script>
 
 <div class="launcher" in:fade>
-  <!-- Top bar -->
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-grand">GRAND</span>
-      <span class="brand-eden">EDEN</span>
-    </div>
-    <div class="server-status">
-      <span class="dot" />
-      <span class="status-text">Сервер онлайн</span>
-      <span class="players">· 247 / 500</span>
-    </div>
-  </header>
-
-  <!-- Main content -->
   <main class="main">
     <div class="hero">
       <div class="hero-text">
-        <div class="hero-label">ПРОЕКТ</div>
-        <h1 class="hero-title">Grand Eden</h1>
-        <p class="hero-desc">
-          Выживание, экономика и приключения в одном мире. Присоединяйся к сообществу.
-        </p>
+        <img src="/logo.png" alt="Grand Eden" class="hero-logo" />
       </div>
       <div class="hero-meta">
         <div class="meta-item">
-          <span class="meta-label">Версия</span>
-          <span class="meta-value">1.20.4</span>
+          <span class="meta-label">Version</span>
+          <span class="meta-value">1.20.1</span>
         </div>
         <div class="meta-item">
-          <span class="meta-label">Пинг</span>
-          <span class="meta-value">12 ms</span>
+          <span class="meta-label">Ping</span>
+          <span class="meta-value">{serverStatus.ping_ms > 0 ? `${serverStatus.ping_ms} ms` : '—'}</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">TPS</span>
-          <span class="meta-value">20.0</span>
+          <span class="meta-value">{serverStatus.tps > 0 ? serverStatus.tps.toFixed(1) : '—'}</span>
         </div>
       </div>
     </div>
 
-    <!-- Play section -->
     <div class="play-section">
+      {#if error}
+        <div class="error-msg">{error}</div>
+      {/if}
+
       {#if status === 'idle'}
         <button class="play-btn" on:click={play}>
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z" />
           </svg>
-          <span>Играть</span>
+          <span>Play</span>
         </button>
-        <div class="play-sub">Готово к запуску</div>
+        <div class="play-sub">Forge 1.20.1 · Ready to launch</div>
       {:else if status === 'downloading'}
         <button class="play-btn downloading" disabled>
           <div class="spinner" />
-          <span>Загрузка...</span>
+          <span>Downloading...</span>
         </button>
         <div class="download-area">
           <div class="progress-bar">
@@ -162,8 +194,8 @@
             <span class="progress-percent">{progress.toFixed(1)}%</span>
           </div>
           <div class="progress-stats">
-            <span>{formatMB(downloadedMB)} / {formatMB(totalMB)} МБ</span>
-            <span>{speed.toFixed(1)} МБ/с</span>
+            <span>{formatMB(downloadedMB)} / {formatMB(totalMB)} MB</span>
+            <span>{speed.toFixed(1)} MB/s</span>
           </div>
         </div>
       {:else if status === 'playing'}
@@ -172,38 +204,32 @@
             <rect x="6" y="5" width="4" height="14" rx="1" />
             <rect x="14" y="5" width="4" height="14" rx="1" />
           </svg>
-          <span>Запущено</span>
+          <span>Launched</span>
         </button>
-        <div class="play-sub">Игра запущена — приятной игры!</div>
+        <div class="play-sub">Game is running — have fun!</div>
       {/if}
     </div>
   </main>
 
-  <!-- Bottom bar -->
   <footer class="bottombar">
     <div class="user" on:click={openSettings} role="button" tabindex="0" on:keydown={(e) => e.key === 'Enter' && openSettings()}>
       <div class="avatar">{nickname.charAt(0).toUpperCase()}</div>
       <div class="user-info">
         <span class="user-name">{nickname}</span>
-        <span class="user-role">Игрок</span>
+        <span class="user-role">Player</span>
       </div>
       <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </div>
-    <div class="links">
-      <a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a>
-      <span class="sep" />
-      <a href="https://t.me" target="_blank" rel="noreferrer">Telegram</a>
-      <span class="sep" />
-      <a href="https://grand-eden.ru" target="_blank" rel="noreferrer">Сайт</a>
-    </div>
+    <a class="credit" href="https://t.me/supminerr" on:click={openLink}>by supminer</a>
   </footer>
 </div>
 
 <SettingsDrawer
   bind:open={settingsOpen}
+  bind:settings={settings}
   {nickname}
   on:close={closeSettings}
   on:logout={logout}
@@ -221,62 +247,9 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 24px 32px;
+    padding: 0 32px 24px;
   }
 
-  /* Top bar */
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-
-  .brand {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.125rem;
-    letter-spacing: 0.02em;
-  }
-
-  .brand-grand {
-    color: var(--text);
-  }
-
-  .brand-eden {
-    color: var(--text-secondary);
-  }
-
-  .server-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-  }
-
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #3ddc84;
-    box-shadow: 0 0 8px rgba(61, 220, 132, 0.5);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  .players {
-    color: var(--text-tertiary);
-  }
-
-  /* Main */
   .main {
     flex: 1;
     display: flex;
@@ -284,7 +257,7 @@
     justify-content: center;
     align-items: center;
     gap: 48px;
-    padding: 32px 0;
+    padding: 16px 0;
   }
 
   .hero {
@@ -296,34 +269,12 @@
     max-width: 600px;
   }
 
-  .hero-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.3em;
-    text-indent: 0.3em;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
+  .hero-logo {
+    height: clamp(80px, 12vw, 140px);
+    width: auto;
   }
 
-  .hero-title {
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-
-  .hero-desc {
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    max-width: 420px;
-  }
-
-  .hero-meta {
-    display: flex;
-    gap: 32px;
-  }
+  .hero-meta { display: flex; gap: 32px; }
 
   .meta-item {
     display: flex;
@@ -347,7 +298,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Play section */
   .play-section {
     display: flex;
     flex-direction: column;
@@ -355,6 +305,16 @@
     gap: 16px;
     width: 100%;
     max-width: 480px;
+  }
+
+  .error-msg {
+    font-size: 0.8125rem;
+    color: #e54848;
+    text-align: center;
+    padding: 8px 16px;
+    background: rgba(229, 72, 72, 0.1);
+    border-radius: 8px;
+    width: 100%;
   }
 
   .play-btn {
@@ -380,19 +340,9 @@
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
   }
 
-  .play-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .play-btn svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .play-btn.downloading {
-    opacity: 0.7;
-    cursor: default;
-  }
+  .play-btn:active:not(:disabled) { transform: translateY(0); }
+  .play-btn svg { width: 22px; height: 22px; }
+  .play-btn.downloading { opacity: 0.7; cursor: default; }
 
   .play-btn.playing {
     background: transparent;
@@ -401,9 +351,7 @@
     box-shadow: none;
   }
 
-  .play-btn.playing:hover {
-    background: var(--bg-surface-hover);
-  }
+  .play-btn.playing:hover { background: var(--bg-surface-hover); }
 
   .spinner {
     width: 20px;
@@ -415,22 +363,11 @@
     opacity: 0.5;
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  .play-sub {
-    font-size: 0.8125rem;
-    color: var(--text-tertiary);
-  }
+  .play-sub { font-size: 0.8125rem; color: var(--text-tertiary); }
 
-  /* Download area */
-  .download-area {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  .download-area { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
   .progress-bar {
     width: 100%;
@@ -463,11 +400,7 @@
     max-width: 70%;
   }
 
-  .progress-percent {
-    color: var(--text);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
+  .progress-percent { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .progress-stats {
     display: flex;
@@ -477,12 +410,12 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Bottom bar */
   .bottombar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    padding: 8px 0;
   }
 
   .user {
@@ -495,9 +428,7 @@
     transition: background 0.15s ease;
   }
 
-  .user:hover {
-    background: var(--bg-surface-hover);
-  }
+  .user:hover { background: var(--bg-surface-hover); }
 
   .settings-icon {
     width: 16px;
@@ -506,10 +437,7 @@
     transition: color 0.15s ease, transform 0.3s ease;
   }
 
-  .user:hover .settings-icon {
-    color: var(--text);
-    transform: rotate(45deg);
-  }
+  .user:hover .settings-icon { color: var(--text); transform: rotate(45deg); }
 
   .avatar {
     width: 38px;
@@ -525,55 +453,28 @@
     font-size: 1.125rem;
   }
 
-  .user-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
+  .user-info { display: flex; flex-direction: column; gap: 1px; }
+  .user-name { font-size: 0.875rem; font-weight: 600; }
+  .user-role { font-size: 0.7rem; color: var(--text-tertiary); }
 
-  .user-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-
-  .user-role {
-    font-size: 0.7rem;
+  .credit {
+    position: fixed;
+    bottom: 16px;
+    right: 24px;
+    font-size: 0.75rem;
     color: var(--text-tertiary);
-  }
-
-  .links {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .links a {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
+    font-weight: 500;
     text-decoration: none;
+    cursor: pointer;
     transition: color 0.2s ease;
   }
 
-  .links a:hover {
+  .credit:hover {
     color: var(--text);
   }
 
-  .sep {
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: var(--text-tertiary);
-  }
-
   @media (max-width: 640px) {
-    .launcher {
-      padding: 20px 20px;
-    }
-    .hero-meta {
-      gap: 20px;
-    }
-    .bottombar .links {
-      display: none;
-    }
+    .launcher { padding: 0 20px 20px; }
+    .hero-meta { gap: 20px; }
   }
 </style>

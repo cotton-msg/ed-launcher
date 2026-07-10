@@ -1,0 +1,99 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for the launcher",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:default",
+    "core:window:allow-close",
+    "core:window:allow-hide",
+    "core:window:allow-show",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "core:window:allow-start-dragging",
+    "core:window:allow-is-maximized",
+    "core:window:allow-set-always-on-top",
+    "dialog:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message",
+    "dialog:allow-ask",
+    "fs:default",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-remove",
+    "fs:allow-copy-file",
+    "fs:allow-rename",
+    "http:default",
+    "http:allow-fetch",
+    "http:allow-fetch-cancel",
+    "http:allow-fetch-read-body",
+    "http:allow-fetch-send",
+    "shell:default",
+    "shell:allow-open",
+    "shell:allow-execute",
+    "shell:allow-spawn",
+    "shell:allow-stdin-write",
+    "shell:allow-kill",
+    "process:default",
+    "process:allow-exit",
+    "process:allow-restart",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPDATA/*" },
+        { "path": "$HOME/.grandeden/**" },
+        { "path": "$HOME/.grandeden/*" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DOWNLOAD/*" }
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "java",
+          "cmd": "java",
+          "args": true
+        },
+        {
+          "name": "javaw",
+          "cmd": "javaw",
+          "args": true
+        },
+        {
+          "name": "where",
+          "cmd": "where",
+          "args": true
+        },
+        {
+          "name": "powershell",
+          "cmd": "powershell",
+          "args": true
+        },
+        {
+          "name": "java-full-path",
+          "cmd": "C:\\Program Files\\Java\\jdk-17\\bin\\java.exe",
+          "args": true
+        },
+        {
+          "name": "java-full-path-21",
+          "cmd": "C:\\Program Files\\Java\\jdk-21\\bin\\java.exe",
+          "args": true
+        },
+        {
+          "name": "java-adoptium",
+          "cmd": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot\\bin\\java.exe",
+          "args": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
+  export let initialNickname = '';
+
   const dispatch = createEventDispatcher<{ enter: { nickname: string } }>();
 
-  let nickname = '';
+  let nickname = initialNickname;
   let focused = false;
   let error = '';
   let shaking = false;
@@ -52,8 +54,7 @@
 <div class="nick-screen" in:fade>
   <div class="card" class:shake={shaking}>
     <div class="brand">
-      <span class="brand-grand">GRAND</span>
-      <span class="brand-eden">EDEN</span>
+      <img src="/logo.png" alt="Grand Eden" class="brand-logo" />
     </div>
 
     <div class="heading">
@@ -151,24 +152,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    line-height: 0.9;
     margin-bottom: 4px;
   }
 
-  .brand-grand,
-  .brand-eden {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.5rem;
-    letter-spacing: 0.02em;
-  }
-
-  .brand-grand {
-    color: var(--text);
-  }
-
-  .brand-eden {
-    color: var(--text-secondary);
+  .brand-logo {
+    height: 120px;
+    width: auto;
   }
 
   .heading {

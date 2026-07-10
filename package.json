@@ -1,21 +1,39 @@
 {
-  "name": "vite-svelte-ts-starter",
+  "name": "grand-eden-launcher",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json && tsc -p tsconfig.node.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json && tsc -p tsconfig.node.json",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-dialog": "^2.0.1",
+    "@tauri-apps/plugin-fs": "^2.0.1",
+    "@tauri-apps/plugin-http": "^2.0.1",
+    "@tauri-apps/plugin-process": "^2.0.1",
+    "@tauri-apps/plugin-shell": "^2.0.1"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@tauri-apps/cli": "^2.1.0",
     "@tsconfig/svelte": "^5.0.4",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.3",
     "svelte": "^4.2.19",
     "svelte-check": "^3.8.6",
     "tslib": "^2.7.0",
     "typescript": "^5.5.3",
     "vite": "^5.4.2"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true,
+    "svelte-preprocess@5.1.4": true
   }
 }
