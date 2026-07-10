@@ -1,47 +1,121 @@
-# Svelte + TS + Vite
+# Grand Eden Launcher
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+Кастомный лаунчер для Minecraft-сервера Grand Eden, построенный на Tauri 2 и Svelte.
 
-## Recommended IDE Setup
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Minecraft](https://img.shields.io/badge/minecraft-1.20.1-green)
+![Forge](https://img.shields.io/badge/forge-47.2.0-orange)
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## ✨ Особенности
 
-## Need an official Svelte framework?
+- 🚀 **Автоматическая загрузка** — Java и игровые файлы скачиваются с GitHub
+- 📦 **Все включено** — моды, конфиги и ресурсы в одном пакете
+- 🎨 **Современный UI** — красивый интерфейс с частицами и анимациями
+- ⚙️ **Настройки** — RAM, разрешение, fullscreen и другие параметры
+- 🌐 **Статус сервера** — онлайн, количество игроков, пинг
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+## 🛠 Технологии
 
-## Technical considerations
+**Frontend:**
+- Svelte 4 + TypeScript
+- Vite
+- Кастомная система частиц
 
-**Why use this over SvelteKit?**
+**Backend:**
+- Tauri 2 (Rust)
+- Плагины: dialog, fs, http, shell, process
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+## 📦 Структура репозитория
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
 ```
+ed-launcher/
+├── java/              # Java 17 для запуска игры
+├── version/           # Игровые файлы
+│   ├── mods/         # Моды для Minecraft 1.20.1
+│   └── config/       # Конфигурация модов
+├── src/              # Frontend (Svelte)
+└── src-tauri/        # Backend (Rust)
+```
+
+## 🚀 Как использовать
+
+### Для игроков
+
+1. Скачайте последнюю версию лаунчера из [Releases](../../releases)
+2. Запустите `grand-eden-launcher.exe`
+3. Введите никнейм
+4. Нажмите "Play" — лаунчер автоматически скачает всё необходимое
+5. Играйте!
+
+### Для разработчиков
+
+**Требования:**
+- [Node.js 18+](https://nodejs.org/)
+- [Rust](https://www.rust-lang.org/tools/install)
+- [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (обычно уже установлен на Windows 10/11)
+
+**Установка:**
+
+```bash
+# Клонировать репозиторий
+git clone https://github.com/supminer/ed-launcher.git
+cd ed-launcher
+
+# Установить зависимости
+npm install
+
+# Запустить в режиме разработки
+npm run tauri:dev
+
+# Собрать для продакшена
+npm run tauri:build
+```
+
+## 📝 Конфигурация
+
+Настройки GitHub репозитория находятся в `src-tauri/src/lib.rs`:
+
+```rust
+const GITHUB_REPO_OWNER: &str = "supminer";
+const GITHUB_REPO_NAME: &str = "ed-launcher";
+const GITHUB_BRANCH: &str = "main";
+```
+
+## 🎮 Моды в сборке
+
+<details>
+<summary>Список модов (70+)</summary>
+
+- Alex's Mobs
+- Better Combat
+- Combat Roll
+- Create + дополнения
+- Farmer's Delight
+- Fantasy Armor & Weapons
+- Emotecraft
+- Voice Chat
+- Embeddium + Oculus (оптимизация)
+- И многие другие...
+
+</details>
+
+## 🔧 Как обновить игровые файлы
+
+1. Замените файлы в папках `java/` и `version/`
+2. Закоммитьте изменения:
+```bash
+git add java/ version/
+git commit -m "Update game files"
+git push origin main
+```
+3. Лаунчер автоматически скачает обновления при следующем запуске
+
+## 📄 Лицензия
+
+Этот проект создан для сервера Grand Eden.
+
+## 🙏 Благодарности
+
+- [Tauri](https://tauri.app/) — фреймворк для десктопных приложений
+- [Svelte](https://svelte.dev/) — реактивный UI-фреймворк
+- Все создатели модов в сборке
