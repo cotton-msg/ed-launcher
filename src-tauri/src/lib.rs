@@ -212,47 +212,47 @@ async fn download_file_with_progress(
 }
 
 // Get list of files in GitHub repository folder
-async fn get_github_tree(path: &str) -> Result<Vec<String>, String> {
-    let url = format!(
-        "https://api.github.com/repos/{}/{}/contents/{}?ref={}",
-        GITHUB_REPO_OWNER, GITHUB_REPO_NAME, path, GITHUB_BRANCH
-    );
+fn get_github_tree(path: &str) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<String>, String>> + Send + '_>> {
+    Box::pin(async move {
+        let url = format!(
+            "https://api.github.com/repos/{}/{}/contents/{}?ref={}",
+            GITHUB_REPO_OWNER, GITHUB_REPO_NAME, path, GITHUB_BRANCH
+        );
 
-    let client = reqwest::Client::builder()
-        .user_agent("GrandEdenLauncher/1.0")
-        .build()
-        .map_err(|e| e.to_string())?;
+        let client = reqwest::Client::builder()
+            .user_agent("GrandEdenLauncher/1.0")
+            .build()
+            .map_err(|e| e.to_string())?;
 
-    let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
-    
-    if !response.status().is_success() {
-        return Err(format!("Failed to get GitHub tree: HTTP {}", response.status()));
-    }
+        let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
+        
+        if !response.status().is_success() {
+            return Err(format!("Failed to get GitHub tree: HTTP {}", response.status()));
+        }
 
-    let items: Vec<serde_json::Value> = response.json().await.map_err(|e| e.to_string())?;
-    let mut files = Vec::new();
+        let items: Vec<serde_json::Value> = response.json().await.map_err(|e| e.to_string())?;
+        let mut files = Vec::new();
 
-    for item in items {
-        if let Some(item_type) = item["type"].as_str() {
-            if item_type == "file" {
-                if let Some(download_url) = item["download_url"].as_str() {
+        for item in items {
+            if let Some(item_type) = item["type"].as_str() {
+                if item_type == "file" {
                     if let Some(path) = item["path"].as_str() {
                         files.push(path.to_string());
                     }
-                }
-            } else if item_type == "dir" {
-                if let Some(subpath) = item["path"].as_str() {
-                    // Recursively get files from subdirectories
-                    match get_github_tree(subpath).await {
-                        Ok(subfiles) => files.extend(subfiles),
-                        Err(_) => continue,
+                } else if item_type == "dir" {
+                    if let Some(subpath) = item["path"].as_str() {
+                        // Recursively get files from subdirectories
+                        match get_github_tree(subpath).await {
+                            Ok(subfiles) => files.extend(subfiles),
+                            Err(_) => continue,
+                        }
                     }
                 }
             }
         }
-    }
 
-    Ok(files)
+        Ok(files)
+    })
 }
 
 #[tauri::command]
