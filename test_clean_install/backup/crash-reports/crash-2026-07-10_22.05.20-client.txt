@@ -1,0 +1,363 @@
+---- Minecraft Crash Report ----
+// Embeddium instance tainted by mods: [oculus, embeddium_extra]
+// Please do not reach out for Embeddium support without removing these mods first.
+// -------
+// Surprise! Haha. Well, this is awkward.
+
+Time: 2026-07-10 22:05:20
+Description: Initializing game
+
+java.lang.NoSuchMethodError: 'com.google.common.collect.ImmutableMap com.google.common.collect.ImmutableMap$Builder.buildOrThrow()'
+	at net.minecraftforge.common.ForgeHooks.readTypedPackFormats(ForgeHooks.java:1491) ~[forge-1.20.1-47.4.20-universal.jar%23315!/:?] {re:mixin,re:classloading}
+	at net.minecraft.server.packs.metadata.pack.PackMetadataSectionSerializer.m_6322_(PackMetadataSectionSerializer.java:16) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.metadata.pack.PackMetadataSectionSerializer.m_6322_(PackMetadataSectionSerializer.java:9) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.AbstractPackResources.m_10214_(AbstractPackResources.java:52) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.AbstractPackResources.m_5550_(AbstractPackResources.java:33) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.Pack.m_246334_(Pack.java:60) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.Pack.m_245429_(Pack.java:35) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.client.resources.ClientPackSource.m_246091_(ClientPackSource.java:94) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading,pl:accesstransformer:B}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_247024_(BuiltInPackSource.java:76) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_246863_(BuiltInPackSource.java:61) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at java.util.HashMap.forEach(HashMap.java:1421) ~[?:?] {re:mixin}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_245188_(BuiltInPackSource.java:60) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_7686_(BuiltInPackSource.java:43) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.PackRepository.m_10526_(PackRepository.java:39) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading,pl:accesstransformer:B,re:mixin,pl:accesstransformer:B}
+	at net.minecraft.server.packs.repository.PackRepository.m_10506_(PackRepository.java:31) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading,pl:accesstransformer:B,re:mixin,pl:accesstransformer:B}
+	at net.minecraft.client.Minecraft.<init>(Minecraft.java:460) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:mixin,pl:accesstransformer:B,re:classloading,pl:accesstransformer:B,pl:mixin:A}
+	at net.minecraft.client.main.Main.main(Main.java:182) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:mixin,re:classloading,pl:mixin:APP:cubes-without-borders.mixins.json:MainMixin,pl:mixin:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:569) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111) ~[fmlloader-1.20.1-47.4.20.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99) ~[fmlloader-1.20.1-47.4.20.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25) ~[fmlloader-1.20.1-47.4.20.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Suspected Mods: NONE
+Stacktrace:
+	at net.minecraftforge.common.ForgeHooks.readTypedPackFormats(ForgeHooks.java:1491) ~[forge-1.20.1-47.4.20-universal.jar%23315!/:?] {re:mixin,re:classloading}
+	at net.minecraft.server.packs.metadata.pack.PackMetadataSectionSerializer.m_6322_(PackMetadataSectionSerializer.java:16) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.metadata.pack.PackMetadataSectionSerializer.m_6322_(PackMetadataSectionSerializer.java:9) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.AbstractPackResources.m_10214_(AbstractPackResources.java:52) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.AbstractPackResources.m_5550_(AbstractPackResources.java:33) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.Pack.m_246334_(Pack.java:60) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.Pack.m_245429_(Pack.java:35) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.client.resources.ClientPackSource.m_246091_(ClientPackSource.java:94) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading,pl:accesstransformer:B}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_247024_(BuiltInPackSource.java:76) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_246863_(BuiltInPackSource.java:61) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at java.util.HashMap.forEach(HashMap.java:1421) ~[?:?] {re:mixin}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_245188_(BuiltInPackSource.java:60) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.BuiltInPackSource.m_7686_(BuiltInPackSource.java:43) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading}
+	at net.minecraft.server.packs.repository.PackRepository.m_10526_(PackRepository.java:39) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading,pl:accesstransformer:B,re:mixin,pl:accesstransformer:B}
+	at net.minecraft.server.packs.repository.PackRepository.m_10506_(PackRepository.java:31) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:classloading,pl:accesstransformer:B,re:mixin,pl:accesstransformer:B}
+	at net.minecraft.client.Minecraft.<init>(Minecraft.java:460) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:mixin,pl:accesstransformer:B,re:classloading,pl:accesstransformer:B,pl:mixin:A}
+-- Initialization --
+Details:
+	Modules: 
+		ADVAPI32.dll:Расширенная библиотека API Windows 32:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		COMCTL32.dll:Библиотека элементов управления взаимодействия с пользователем:6.10 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPT32.dll:API32 криптографии:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTBASE.DLL:Base cryptographic API DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTSP.dll:Cryptographic Service Provider API:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		CoreMessaging.dll:Microsoft CoreMessaging Dll:10.0.26100.4202 (WinBuild.160101.0800):Microsoft Corporation
+		CoreUIComponents.dll:Microsoft Core UI Components Dll:10.0.26100.5074:Microsoft Corporation
+		DBGHELP.DLL:Windows Image Helper:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		DEVOBJ.dll:Device Information Set DLL:10.0.26100.1150 (WinBuild.160101.0800):Microsoft Corporation
+		DNSAPI.dll:Динамическая библиотека API DNS-клиента:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		GDI32.dll:GDI Client DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		GLU32.dll:Библиотека подпрограмм OpenGL:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		IMM32.DLL:Multi-User Windows IMM32 API Client DLL:10.0.26100.4484 (WinBuild.160101.0800):Microsoft Corporation
+		IPHLPAPI.DLL:API вспомогательного приложения IP:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		KERNEL32.DLL:Библиотека клиента Windows NT BASE API:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		KERNELBASE.dll:Библиотека клиента Windows NT BASE API:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		MSCTF.dll:Серверная библиотека MSCTF:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		MpOav.dll:IOfficeAntiVirus Module:4.18.26060.3008 (df1b0eba8e0e68e7272235d6dea4de3285c715b9):Microsoft Corporation
+		NSI.dll:NSI User-mode interface DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		NTASN1.dll:Microsoft ASN.1 API:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		OLEAUT32.dll:OLEAUT32.DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		POWRPROF.dll:DLL модуля поддержки профиля управления питанием:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		PSAPI.DLL:Process Status Helper:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		Pdh.dll:Модуль поддержки данных производительности Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		RPCRT4.dll:Библиотека удаленного вызова процедур:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		SETUPAPI.dll:Windows Setup API:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		SHCORE.dll:SHCORE:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		SHELL32.dll:Общая библиотека оболочки Windows:10.0.26100.4768 (WinBuild.160101.0800):Microsoft Corporation
+		SspiCli.dll:Security Support Provider Interface:10.0.26100.6584 (WinBuild.160101.0800):Microsoft Corporation
+		UMPDC.dll:User Mode Power Dependency Coordinator:10.0.26100.1301 (WinBuild.160101.0800):Microsoft Corporation
+		USER32.dll:Многопользовательская библиотека клиента USER API Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		USERENV.dll:Userenv:10.0.26100.1441 (WinBuild.160101.0800):Microsoft Corporation
+		VCRUNTIME140.dll:Microsoft® C Runtime Library:14.40.33810.0:Microsoft Corporation
+		VERSION.dll:Version Checking and File Installation Libraries:10.0.26100.1150 (WinBuild.160101.0800):Microsoft Corporation
+		WINHTTP.dll:Службы HTTP Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		WINMM.dll:MCI API DLL:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		WINSTA.dll:Winstation Library:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		WINTRUST.dll:Microsoft Trust Verification APIs:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		WS2_32.dll:32-разрядная библиотека Windows Socket 2.0:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		WTSAPI32.dll:Windows Remote Desktop Session Host Server SDK APIs:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		amsi.dll:Anti-Malware Scan Interface:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		apphelp.dll:Клиентская библиотека совместимости приложений:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		awt.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		bcrypt.dll:Библиотека криптографических примитивов Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		bcryptPrimitives.dll:Windows Cryptographic Primitives Library:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		cfgmgr32.dll:Configuration Manager DLL:10.0.26100.4202 (WinBuild.160101.0800):Microsoft Corporation
+		clbcatq.dll:COM+ Configuration Catalog:2001.12.10941.16384 (WinBuild.160101.0800):Microsoft Corporation
+		combase.dll:Microsoft COM для Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		cryptnet.dll:Crypto Network Related API:10.0.26100.3624 (WinBuild.160101.0800):Microsoft Corporation
+		dbgcore.DLL:Windows Core Debugging Helpers:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		dhcpcsvc.DLL:Служба DHCP-клиента:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		dhcpcsvc6.DLL:Клиент DHCPv6:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		dinput8.dll:Microsoft DirectInput:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		drvstore.dll:Driver Store API:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		dwmapi.dll:Интерфейс API диспетчера окон рабочего стола (Майкрософт):10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		dxcore.dll:DXCore:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		extnet.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		fwpuclnt.dll:API пользовательского режима FWP/IPsec:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		gdi32full.dll:GDI Client DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		glfw.dll:GLFW 3.4.0 DLL:3.4.0:GLFW
+		icm32.dll:Microsoft Color Management Module (CMM):10.0.26100.2314 (WinBuild.160101.0800):Microsoft Corporation
+		imagehlp.dll:Windows NT Image Helper:10.0.26100.4202 (WinBuild.160101.0800):Microsoft Corporation
+		inputhost.dll:InputHost:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		java.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		java.exe:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		jemalloc.dll
+		jimage.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		jli.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		jna2090224225442240376.dll:JNA native library:6.1.4:Java(TM) Native Access (JNA)
+		jsvml.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		jvm.dll:OpenJDK 64-Bit server VM:17.0.19.0:Eclipse Adoptium
+		kernel.appcore.dll:AppModel API Host:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		lwjgl.dll
+		lwjgl_opengl.dll
+		lwjgl_stb.dll
+		management.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		management_ext.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		msasn1.dll:ASN.1 Runtime APIs:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		mscms.dll:DLL-библиотека системы сопоставления цветов Майкрософт:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		msvcp140.dll:Microsoft® C Runtime Library:14.40.33810.0:Microsoft Corporation
+		msvcp_win.dll:Microsoft® C Runtime Library:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		msvcrt.dll:Windows NT CRT DLL:7.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		mswsock.dll:Расширение поставщика службы API Microsoft Windows Sockets 2.0:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		napinsp.dll:Поставщик оболочки совместимости для имен электронной почты:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		ncrypt.dll:Маршрутизатор Windows NCrypt:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		net.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		nio.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		nlansp_c.dll:NLA Namespace Service Provider DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		ntdll.dll:Системная библиотека NT:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		ntmarta.dll:Поставщик Windows NT MARTA:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		nvgpucomp64.dll:NVIDIA GPU Compiler Driver, Version 591.86 :32.0.15.9186:NVIDIA Corporation
+		nvoglv64.dll:NVIDIA Compatible OpenGL ICD:32.0.15.9186:NVIDIA Corporation
+		ole32.dll:Microsoft OLE для Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		opengl32.dll:OpenGL Client DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		perfos.dll:Библиотека объектов производительности системы Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		pfclient.dll:SysMain Client:10.0.26100.4202 (WinBuild.160101.0800):Microsoft Corporation
+		profapi.dll:User Profile Basic API:10.0.26100.4768 (WinBuild.160101.0800):Microsoft Corporation
+		rasadhlp.dll:Remote Access AutoDial Helper:10.0.26100.6584 (WinBuild.160101.0800):Microsoft Corporation
+		rsaenh.dll:Microsoft Enhanced Cryptographic Provider:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		sechost.dll:Host for SCM/SDDL/LSA Lookup APIs:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		shlwapi.dll:Библиотека небольших программ оболочки:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		sunmscapi.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		textinputframework.dll:"TextInputFramework.DYNLINK":10.0.26100.6584 (WinBuild.160101.0800):Microsoft Corporation
+		ucrtbase.dll:Microsoft® C Runtime Library:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		uxtheme.dll:Библиотека тем UxTheme (Microsoft):10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		vcruntime140_1.dll:Microsoft® C Runtime Library:14.40.33810.0:Microsoft Corporation
+		verify.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+		win32u.dll:Win32u:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		windows.staterepositorycore.dll:Windows StateRepository API Core:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		windows.storage.dll:API хранения Microsoft WinRT:10.0.26100.1441 (WinBuild.160101.0800):Microsoft Corporation
+		winrnr.dll:LDAP RnR Provider DLL:10.0.26100.1882 (WinBuild.160101.0800):Microsoft Corporation
+		wintypes.dll:Библиотека DLL основных типов Windows:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		wldp.dll:Политика блокировки Windows:10.0.26100.1441 (WinBuild.160101.0800):Microsoft Corporation
+		wshbth.dll:Windows Sockets Helper DLL:10.0.26100.5074 (WinBuild.160101.0800):Microsoft Corporation
+		wshunix.dll:AF_UNIX Winsock2 Helper DLL:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		xinput1_4.dll:API общего контроллера (Майкрософт):10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		zip.dll:OpenJDK Platform binary:17.0.19.0:Eclipse Adoptium
+Stacktrace:
+	at net.minecraft.client.main.Main.main(Main.java:182) ~[client-1.20.1-20230612.114412-srg.jar%23310!/:?] {re:mixin,re:classloading,pl:mixin:APP:cubes-without-borders.mixins.json:MainMixin,pl:mixin:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:569) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111) ~[fmlloader-1.20.1-47.4.20.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99) ~[fmlloader-1.20.1-47.4.20.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25) ~[fmlloader-1.20.1-47.4.20.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Minecraft Version ID: 1.20.1
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 17.0.19, Eclipse Adoptium
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Eclipse Adoptium
+	Memory: 2237464128 bytes (2133 MiB) / 3489660928 bytes (3328 MiB) up to 6979321856 bytes (6656 MiB)
+	CPUs: 12
+	Processor Vendor: AuthenticAMD
+	Processor Name: AMD Ryzen 5 5600X 6-Core Processor             
+	Identifier: AuthenticAMD Family 25 Model 33 Stepping 0
+	Microarchitecture: Zen 3
+	Frequency (GHz): 3.69
+	Number of physical packages: 1
+	Number of physical CPUs: 6
+	Number of logical CPUs: 12
+	Graphics card #0 name: NVIDIA GeForce GTX 1660 SUPER
+	Graphics card #0 vendor: NVIDIA (0x10de)
+	Graphics card #0 VRAM (MB): 4095.00
+	Graphics card #0 deviceId: 0x21c4
+	Graphics card #0 versionInfo: DriverVersion=32.0.15.9186
+	Memory slot #0 capacity (MB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 2.67
+	Memory slot #0 type: DDR4
+	Memory slot #1 capacity (MB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 2.67
+	Memory slot #1 type: DDR4
+	Virtual memory max (MB): 29838.51
+	Virtual memory used (MB): 28270.18
+	Swap memory total (MB): 13568.58
+	Swap memory used (MB): 1649.07
+	JVM Flags: 6 total; -Xmx6656m -Xms3328m -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=50 -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump
+	Loaded Shaderpack: (off)
+	Launched Version: 1.20.1-47.4.20
+	Backend library: LWJGL version 3.3.1 build 7
+	Backend API: NVIDIA GeForce GTX 1660 SUPER/PCIe/SSE2 GL version 4.6.0 NVIDIA 591.86, NVIDIA Corporation
+	Window size: <not initialized>
+	GL Caps: Using framebuffer using OpenGL 3.2
+	GL debug messages: 
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'forge'
+	Type: Client (map_client.txt)
+	CPU: 12x AMD Ryzen 5 5600X 6-Core Processor 
+	ModLauncher: 10.0.9+10.0.9+main.dcd20f30
+	ModLauncher launch target: forgeclient
+	ModLauncher naming: srg
+	ModLauncher services: 
+		mixin-0.8.5.jar mixin PLUGINSERVICE 
+		eventbus-6.2.33.jar eventbus PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.20.jar slf4jfixer PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.20.jar object_holder_definalize PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.20.jar runtime_enum_extender PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.20.jar capability_token_subclass PLUGINSERVICE 
+		accesstransformers-8.0.4.jar accesstransformer PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.20.jar runtimedistcleaner PLUGINSERVICE 
+		modlauncher-10.0.9.jar mixin TRANSFORMATIONSERVICE 
+		modlauncher-10.0.9.jar fml TRANSFORMATIONSERVICE 
+	FML Language Providers: 
+		minecraft@1.0
+		kotlinforforge@4.12.0
+		javafml@null
+		lowcodefml@null
+	Mod List: 
+		c2meF-fixes-worldgen-threading-issues-mc1.20.1-0.2|Concurrent Chunk Management En|c2me_fixes_worldgen_threading_|0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		YungsBetterDungeons-1.20-Forge-4.0.4.jar          |YUNG's Better Dungeons        |betterdungeons                |1.20-Forge-4.0.4    |COMMON_SET|Manifest: NOSIGNATURE
+		supermartijn642configlib-1.1.8-forge-mc1.20.jar   |SuperMartijn642's Config Libra|supermartijn642configlib      |1.1.8               |COMMON_SET|Manifest: NOSIGNATURE
+		YungsBetterWitchHuts-1.20-Forge-3.0.3.jar         |YUNG's Better Witch Huts      |betterwitchhuts               |1.20-Forge-3.0.3    |COMMON_SET|Manifest: NOSIGNATURE
+		fantasy_weapons-forge-0.4-1.20.1(1).jar           |Fantasy Weapons               |fantasy_weapons               |0.4-1.20.1          |COMMON_SET|Manifest: NOSIGNATURE
+		geckolib-forge-1.20.1-4.8.4.jar                   |GeckoLib 4                    |geckolib                      |4.8.4               |COMMON_SET|Manifest: NOSIGNATURE
+		player-animation-lib-forge-1.0.2-rc1+1.20.jar     |Player Animator               |playeranimator                |1.0.2-rc1+1.20      |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-rewrites-chunk-serializer-mc1.20.1-0.2.0+alp|Concurrent Chunk Management En|c2me_rewrites_chunk_serializer|0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		playeranimatorapi-forge-1.20.1-2.1.7.jar          |Zigy's Player Animator API    |playeranimatorapi             |2.1.7               |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-fixes-general-threading-issues-mc1.20.1-0.2.|Concurrent Chunk Management En|c2me_fixes_general_threading_i|0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		goety-2.5.54.5.jar                                |Goety                         |goety                         |2.5.54.5            |COMMON_SET|Manifest: NOSIGNATURE
+		citadel-2.6.3-1.20.1.jar                          |Citadel                       |citadel                       |2.6.3               |COMMON_SET|Manifest: NOSIGNATURE
+		alexsmobs-1.22.9(1).jar                           |Alex's Mobs                   |alexsmobs                     |1.22.9              |COMMON_SET|Manifest: NOSIGNATURE
+		YungsApi-1.20-Forge-4.0.6.jar                     |YUNG's API                    |yungsapi                      |1.20-Forge-4.0.6    |COMMON_SET|Manifest: NOSIGNATURE
+		gravestonecurioscompat-1.18.x-1.20.x-Forge-2.1.0.j|gravestonecurioscompat        |gravestonecurioscompat        |2.1.0               |COMMON_SET|Manifest: NOSIGNATURE
+		Kambrik-6.1.1+1.20.1-forge.jar                    |Kambrik                       |kambrik                       |6.1.1+1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-math-mc1.20.1-0.2.0+alpha.12.jar       |Concurrent Chunk Management En|c2me_opts_math                |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-0.2.0+alpha.12-all.jar                      |Concurrent Chunk Management En|c2me                          |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-base-mc1.20.1-0.2.0+alpha.12.jar            |Concurrent Chunk Management En|c2me_base                     |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		exposure-forge-1.20.1-1.9.21.jar                  |Exposure                      |exposure                      |1.9.21              |ERROR     |Manifest: NOSIGNATURE
+		baguettelib-1.20.1-Forge-1.1.6.jar                |BaguetteLib                   |baguettelib                   |1.1.6               |COMMON_SET|Manifest: NOSIGNATURE
+		cloth-config-11.1.136-forge.jar                   |Cloth Config v10 API          |cloth_config                  |11.1.136            |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-fixes-worldgen-vanilla-bugs-mc1.20.1-0.2.0+a|Concurrent Chunk Management En|c2me_fixes_worldgen_vanilla_bu|0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		Geophilic v3.6.mod.jar                            |Geophilic                     |geophilic                     |3.6                 |COMMON_SET|Manifest: NOSIGNATURE
+		embeddium-0.3.31+mc1.20.1.jar                     |Embeddium                     |embeddium                     |0.3.31+mc1.20.1     |COMMON_SET|Manifest: NOSIGNATURE
+		FarmersDelight-1.20.1-1.3.2.jar                   |Farmer's Delight              |farmersdelight                |1.20.1-1.3.2        |COMMON_SET|Manifest: NOSIGNATURE
+		fantasy_armor-forge-1.2.4-1.20.1(1).jar           |Fantasy Armor                 |fantasy_armor                 |1.2.4-1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-fixes-chunkio-threading-issues-mc1.20.1-0.2.|Concurrent Chunk Management En|c2me_fixes_chunkio_threading_i|0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		alekiNiftyShips-FORGE-1.20.1-1.0.14(1).jar        |aleki's Nifty Ships           |alekiships                    |1.0.14              |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-client-uncapvd-mc1.20.1-0.2.0+alpha.12.jar  |Concurrent Chunk Management En|c2me_client_uncapvd           |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		Bountiful-6.0.4+1.20.1-forge.jar                  |Bountiful                     |bountiful                     |6.0.4+1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		zigysmultiloaderutils-forge-1.20.1-1.3.1.jar      |Zigy's Multiloader Utils      |zigysmultiloaderutils         |1.3.1               |COMMON_SET|Manifest: NOSIGNATURE
+		curios-forge-5.14.1+1.20.1.jar                    |Curios API                    |curios                        |5.14.1+1.20.1       |COMMON_SET|Manifest: NOSIGNATURE
+		camping-forge-1.20.1-2.0.0.jar                    |Camping                       |camping                       |2.0.0               |COMMON_SET|Manifest: NOSIGNATURE
+		oculus-mc1.20.1-1.8.0.jar                         |Oculus                        |oculus                        |1.8.0               |COMMON_SET|Manifest: NOSIGNATURE
+		CreateLazyTick-2.4.9-6.0.x-forge-1.20.1.jar       |Create:Lazy Tick              |createlazytick                |2.4.9-6.0.x         |COMMON_SET|Manifest: NOSIGNATURE
+		seamless-loading-screen-2.0.3+1.20.1-forge.jar    |Seamless Loading Screen       |seamless_loading_screen       |2.0.3+1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		EBE-1.20-1.20.1-0.9.1B.jar                        |EnlightedBlockEntities        |ebe                           |0.9.1-BETA          |COMMON_SET|Manifest: NOSIGNATURE
+		architectury-9.2.14-forge.jar                     |Architectury                  |architectury                  |9.2.14              |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-rewrites-chunkio-mc1.20.1-0.2.0+alpha.12.jar|Concurrent Chunk Management En|c2me_rewrites_chunkio         |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		YungsBetterMineshafts-1.20-Forge-4.0.4.jar        |YUNG's Better Mineshafts      |bettermineshafts              |1.20-Forge-4.0.4    |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-allocs-mc1.20.1-0.2.0+alpha.12.jar     |Concurrent Chunk Management En|c2me_opts_allocs              |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		hats-forge-1.20.1-1.2.4.jar                       |Galena Hats                   |galena_hats                   |1.20.1-1.2.4        |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-threading-lighting-mc1.20.1-0.2.0+alpha.12.j|Concurrent Chunk Management En|c2me_threading_lighting       |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		WI-Zoom-1.5-MC1.20.1-Forge.jar                    |WI Zoom                       |wi_zoom                       |1.5-MC1.20.1-Forge  |COMMON_SET|Manifest: NOSIGNATURE
+		jei-1.20.1-forge-15.20.0.132.jar                  |Just Enough Items             |jei                           |15.20.0.132         |COMMON_SET|Manifest: NOSIGNATURE
+		lithostitched-forge-1.20.1-1.4.11.jar             |Lithostitched                 |lithostitched                 |1.4.11              |COMMON_SET|Manifest: NOSIGNATURE
+		letsdo-furniture-forge-1.0.4(1).jar               |[Let's Do] Furniture          |furniture                     |1.0.4               |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-threading-chunkio-mc1.20.1-0.2.0+alpha.12.ja|Concurrent Chunk Management En|c2me_threading_chunkio        |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		multikulti-core-forge-1.20.1-1.1.5.jar            |Multi-Kulti                   |multikulti_core               |1.20.1-1.1.5        |COMMON_SET|Manifest: NOSIGNATURE
+		YungsCaveBiomes-1.20.1-Forge-2.0.5.jar            |YUNG's Cave Biomes            |yungscavebiomes               |1.20.1-Forge-2.0.5  |COMMON_SET|Manifest: NOSIGNATURE
+		nirvana-forge-1.2.5.jar                           |Nirvana                       |nirvana                       |1.2.5               |COMMON_SET|Manifest: NOSIGNATURE
+		ToadLib-1.20.1-1.3.5S-3.jar                       |ToadLib                       |toadlib                       |1.3.5S-2            |COMMON_SET|Manifest: NOSIGNATURE
+		multikulti-registrate-forge-1.20.1-1.1.5.jar      |Multi-Kulti                   |multikulti_registrate         |1.20.1-1.1.5        |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-chunk-access-mc1.20.1-0.2.0+alpha.12.ja|Concurrent Chunk Management En|c2me_opts_chunk_access        |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		forge-1.20.1-47.4.20-universal.jar                |Forge                         |forge                         |47.4.20             |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-worldgen-vanilla-mc1.20.1-0.2.0+alpha.1|Concurrent Chunk Management En|c2me_opts_worldgen_vanilla    |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-scheduling-mc1.20.1-0.2.0+alpha.12.jar |Concurrent Chunk Management En|c2me_opts_scheduling          |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		emotecraft-for-MC1.20.1-2.2.7-b.build.50-forge.jar|Emotecraft                    |emotecraft                    |2.2.7-b.build.50    |COMMON_SET|Manifest: NOSIGNATURE
+		alcocraftplus-1.20-2.1.1-forge.jar                |AlcoCraft+                    |alcocraftplus                 |2.1.1               |COMMON_SET|Manifest: NOSIGNATURE
+		client-1.20.1-20230612.114412-srg.jar             |Minecraft                     |minecraft                     |1.20.1              |COMMON_SET|Manifest: a1:d4:5e:04:4f:d3:d6:e0:7b:37:97:cf:77:b0:de:ad:4a:47:ce:8c:96:49:5f:0a:cf:8c:ae:b2:6d:4b:8a:3f
+		voicechat-forge-1.20.1-2.6.20.jar                 |Simple Voice Chat             |voicechat                     |1.20.1-2.6.20       |COMMON_SET|Manifest: NOSIGNATURE
+		Steam_Rails-1.7.2+forge-mc1.20.1.jar              |Create: Steam 'n' Rails       |railways                      |1.7.2+forge-mc1.20.1|COMMON_SET|Manifest: NOSIGNATURE
+		TerraBlender-forge-1.20.1-3.0.1.10.jar            |TerraBlender                  |terrablender                  |3.0.1.10            |COMMON_SET|Manifest: NOSIGNATURE
+		moonlight-1.20-2.16.34-forge.jar                  |Moonlight Library             |moonlight                     |1.20-2.16.34        |COMMON_SET|Manifest: NOSIGNATURE
+		bettercombat-forge-1.9.0+1.20.1.jar               |Better Combat                 |bettercombat                  |1.9.0+1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		combatroll-forge-1.3.3+1.20.1.jar                 |Combat Roll                   |combatroll                    |1.3.3+1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		mixinsquared-forge-0.1.1.jar                      |MixinSquared                  |mixinsquared                  |0.1.1               |COMMON_SET|Manifest: NOSIGNATURE
+		cwb-forge-3.0.0+mc1.20.jar                        |Cubes Without Borders         |cubes_without_borders         |3.0.0+mc1.20        |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-server-utils-mc1.20.1-0.2.0+alpha.12.jar    |Concurrent Chunk Management En|c2me_server_utils             |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		kffmod-4.12.0.jar                                 |Kotlin For Forge              |kotlinforforge                |4.12.0              |COMMON_SET|Manifest: NOSIGNATURE
+		flywheel-forge-1.20.1-1.0.5.jar                   |Flywheel                      |flywheel                      |1.0.5               |COMMON_SET|Manifest: NOSIGNATURE
+		Ponder-Forge-1.20.1-1.0.91.jar                    |Ponder                        |ponder                        |1.0.91              |COMMON_SET|Manifest: NOSIGNATURE
+		create-1.20.1-6.0.8(1).jar                        |Create                        |create                        |6.0.8               |COMMON_SET|Manifest: NOSIGNATURE
+		createdeco-2.0.3-1.20.1-forge.jar                 |Create Deco                   |createdeco                    |2.0.3-1.20.1-forge  |COMMON_SET|Manifest: NOSIGNATURE
+		alcocraftpluscreate-1.0.0-beta.jar                |Create: AlcoCraft+            |alcocraftpluscreate           |1.0.0-beta          |COMMON_SET|Manifest: NOSIGNATURE
+		create-structures-0.1.1-1.20.1-FORGE.jar          |Create: Structures            |create_structures             |0.1.1               |COMMON_SET|Manifest: NOSIGNATURE
+		supplementaries-1.20-3.1.43-forge(1).jar          |Supplementaries               |supplementaries               |1.20-3.1.43         |COMMON_SET|Manifest: NOSIGNATURE
+		gravestone-forge-1.20.1-1.0.35(1).jar             |Gravestone Mod                |gravestone                    |1.20.1-1.0.35       |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-notickvd-mc1.20.1-0.2.0+alpha.12.jar        |Concurrent Chunk Management En|c2me_notickvd                 |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		betterarcheology-1.2.1-1.20.1.jar                 |Better Archeology             |betterarcheology              |1.2.1-1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-worldgen-general-mc1.20.1-0.2.0+alpha.1|Concurrent Chunk Management En|c2me_opts_worldgen_general    |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-opts-chunkio-mc1.20.1-0.2.0+alpha.12.jar    |Concurrent Chunk Management En|c2me_opts_chunkio             |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		c2meF-threading-worldgen-mc1.20.1-0.2.0+alpha.12.j|Concurrent Chunk Management En|c2me_threading_worldgen       |0.2.0+alpha.12      |COMMON_SET|Manifest: NOSIGNATURE
+		rubidium-extra-0.5.4.4+mc1.20.1-build.131.jar     |Embeddium Extra               |embeddium_extra               |0.5.4.4+mc1.20.1-bui|COMMON_SET|Manifest: NOSIGNATURE
+		yet-another-config-lib-forge-3.0.1+1.20.jar       |YetAnotherConfigLib           |yet_another_config_lib_v3     |3.0.1+1.20          |COMMON_SET|Manifest: NOSIGNATURE
+		immersive_melodies-0.6.1+1.20.1-forge.jar         |Immersive Melodies            |immersive_melodies            |0.6.1+1.20.1        |COMMON_SET|Manifest: NOSIGNATURE
+		createaddition-1.20.1-1.3.3.jar                   |Create Crafts & Additions     |createaddition                |1.20.1-1.3.3        |COMMON_SET|Manifest: NOSIGNATURE
+		create-food-1.20.1-1.1.13a-forge(1)(1).jar        |Create: Food                  |createfood                    |1.1.13a-forge       |COMMON_SET|Manifest: NOSIGNATURE
+	Crash Report UUID: 09fb6067-2a0d-41e5-b566-8f3ffc4b8f43
+	FML: 47.4
+	Forge: net.minecraftforge:47.4.20
+	Flywheel Backend: flywheel:off
