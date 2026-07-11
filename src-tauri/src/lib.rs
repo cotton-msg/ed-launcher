@@ -458,9 +458,10 @@ async fn download_game(
         }
     }
 
-    // Download version folder from Supabase Storage
-    let version_dir = game_dir.join("version");
-    if !version_dir.exists() {
+    // Download version folder (mods, configs) from Supabase into ~/.minecraft
+    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
+    let mc_mods_dir = mc_dir.join("mods");
+    if !mc_mods_dir.exists() {
         let _ = app.emit("download-progress", &DownloadProgress {
             file: "Downloading game files...".to_string(),
             progress: 0.0,
@@ -478,7 +479,7 @@ async fn download_game(
                 SUPABASE_URL, SUPABASE_BUCKET, file_path
             );
             
-            let local_path = game_dir.join(file_path);
+            let local_path = mc_dir.join(file_path);
             
             if let Some(parent) = local_path.parent() {
                 fs::create_dir_all(parent).ok();
@@ -504,7 +505,6 @@ async fn download_game(
     }
 
     // Download Forge version JSON + libraries + client jar into ~/.minecraft
-    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
     let versions_dir = mc_dir.join("versions").join("1.20.1-forge-47.4.20");
     let forge_json_path = versions_dir.join("1.20.1-forge-47.4.20.json");
     let client_jar_path = versions_dir.join("1.20.1-47.4.20.jar");
@@ -550,13 +550,12 @@ async fn download_game(
                         }
 
                         // Download asset index
-                        let assets_dir = game_dir.join("assets");
-                        let indexes_dir = assets_dir.join("indexes");
-                        fs::create_dir_all(&indexes_dir).ok();
+                        let assets_dir = mc_dir.join("assets").join("indexes");
+                        fs::create_dir_all(&assets_dir).ok();
                         if let Some(asset_index) = vanilla_json.get("assetIndex") {
                             let asset_index_id = asset_index.get("id").and_then(|v| v.as_str()).unwrap_or("5");
                             let asset_index_url = asset_index.get("url").and_then(|v| v.as_str());
-                            let asset_index_path = indexes_dir.join(format!("{}.json", asset_index_id));
+                            let asset_index_path = assets_dir.join(format!("{}.json", asset_index_id));
                             if !asset_index_path.exists() {
                                 if let Some(idx_url) = asset_index_url {
                                     let _ = app.emit("download-progress", &DownloadProgress {
@@ -790,7 +789,6 @@ async fn launch_game(
     settings: LauncherSettings,
 ) -> Result<bool, String> {
     let game_dir = get_app_data_dir(&app).join("game");
-    let version_dir = game_dir.join("version");
 
     // Find Java: system first, then downloaded
     let java_exe = find_java_exec(&game_dir);
@@ -799,22 +797,22 @@ async fn launch_game(
         return Err("Java not found. Please download game files first.".to_string());
     }
 
-    if !version_dir.exists() {
+    // All Minecraft files live in ~/.minecraft
+    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
+    let mc_versions = mc_dir.join("versions").join("1.20.1-forge-47.4.20");
+    let forge_version_json = mc_versions.join("1.20.1-forge-47.4.20.json");
+    let client_jar = mc_versions.join("1.20.1-47.4.20.jar");
+
+    if !forge_version_json.exists() || !client_jar.exists() {
         return Err("Game files not found. Please download game files first.".to_string());
     }
-
-    // All Minecraft files live in ~/.minecraft — download function puts them there
-    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
     let mc_libs = mc_dir.join("libraries");
     let libs_str = mc_libs.to_string_lossy().to_string();
 
     let sep = if cfg!(windows) { ";" } else { ":" };
 
-    let mc_versions = mc_dir.join("versions");
-    let forge_version_json = mc_versions.join("1.20.1-forge-47.4.20/1.20.1-forge-47.4.20.json");
-
     // If critical files are missing, download them now
-    if !forge_version_json.exists() || !mc_libs.exists() {
+    if !mc_libs.exists() {
         let client = reqwest::Client::builder()
             .user_agent("GrandEdenLauncher/1.0")
             .build()
@@ -827,7 +825,7 @@ async fn launch_game(
         }
 
         // Download vanilla version JSON (for client jar + libs)
-        let vanilla_json_path = mc_versions.join("1.20.1-forge-47.4.20/1.20.1.json");
+        let vanilla_json_path = mc_versions.join("1.20.1.json");
         if !vanilla_json_path.exists() {
             let manifest_resp = client.get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
                 .send().await.map_err(|e| e.to_string())?;
@@ -840,7 +838,6 @@ async fn launch_game(
                         fs::write(&vanilla_json_path, serde_json::to_string(&vanilla_json).unwrap_or_default()).ok();
 
                         // Download client jar
-                        let client_jar = mc_versions.join("1.20.1-forge-47.4.20/1.20.1-47.4.20.jar");
                         if !client_jar.exists() {
                             if let Some(dl) = vanilla_json.get("downloads").and_then(|d| d.get("client")) {
                                 if let Some(url) = dl.get("url").and_then(|u| u.as_str()) {
@@ -997,9 +994,9 @@ async fn launch_game(
     let mut classpath = Vec::new();
 
     // Add client jar
-    let client_jar = format!("{}/1.20.1-47.4.20.jar", version_dir.to_string_lossy());
-    if std::path::Path::new(&client_jar).exists() {
-        classpath.push(client_jar);
+    let client_jar_str = client_jar.to_string_lossy().to_string();
+    if client_jar.exists() {
+        classpath.push(client_jar_str);
     }
 
     // Add libraries from JSON
@@ -1061,7 +1058,7 @@ async fn launch_game(
                     .replace("${library_directory}", &libs_str)
                     .replace("${classpath_separator}", sep)
                     .replace("${version_classpath_separator}", sep)
-                    .replace("${natives_directory}", &version_dir.to_string_lossy())
+                    .replace("${natives_directory}", &mc_versions.to_string_lossy())
                     .replace("${classpath}", &classpath_str);
                 // Append ForgeAutoRenamingTool to ignoreList to prevent module conflict with ASM
                 if substituted.starts_with("-DignoreList=") {
@@ -1183,24 +1180,43 @@ async fn launch_game(
     }
 
     // Log the full command to a debug file
-    let debug_path = version_dir.join("debug_args.txt");
+    let debug_path = mc_versions.join("debug_args.txt");
     let mut debug_content = format!("java {}\n", args.join(" "));
     debug_content.push_str(&format!("\nClasspath entries: {}\n", classpath.len()));
     debug_content.push_str(&format!("Args count: {}\n", args.len()));
     let _ = fs::write(&debug_path, &debug_content);
 
     // Create log file
-    let log_path = version_dir.join("launcher.log");
+    let log_path = mc_versions.join("launcher.log");
     let log_file = fs::File::create(&log_path).map_err(|e| format!("Failed to create log: {}", e))?;
 
     // Launch the game
     let mut child = std::process::Command::new(&java_exe)
         .args(&args)
-        .current_dir(&version_dir)
+        .current_dir(&mc_versions)
         .stdout(log_file.try_clone().map_err(|e| e.to_string())?)
         .stderr(log_file)
         .spawn()
         .map_err(|e| format!("Failed to launch game: {}", e))?;
+
+    // Wait briefly and check if process crashed immediately
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    match child.try_wait() {
+        Ok(Some(status)) => {
+            let log_content = fs::read_to_string(&log_path).unwrap_or_default();
+            let tail: String = log_content.lines().rev().take(30).collect::<Vec<_>>().join("\n");
+            return Err(format!(
+                "Game exited immediately with status: {}. Last log lines:\n{}",
+                status, tail
+            ));
+        }
+        Ok(None) => {
+            // Still running — good
+        }
+        Err(e) => {
+            return Err(format!("Failed to check game status: {}", e));
+        }
+    }
 
     std::thread::spawn(move || {
         let _ = child.wait();
