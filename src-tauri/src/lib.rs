@@ -1,9 +1,69 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::Write;
+use std::io::{Read as _, Write};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
+
+const FORGE_INSTALLER_URL: &str =
+    "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.20/forge-1.20.1-47.4.20-installer.jar";
+
+async fn download_forge_json(
+    app: &tauri::AppHandle,
+    forge_json_path: &PathBuf,
+) -> Result<(), String> {
+    fs::create_dir_all(forge_json_path.parent().unwrap()).map_err(|e| e.to_string())?;
+
+    let _ = app.emit("download-progress", &DownloadProgress {
+        file: "Downloading Forge version info...".to_string(),
+        progress: 0.0,
+        downloaded_mb: 0.0,
+        total_mb: 0.0,
+        speed_mb_s: 0.0,
+    });
+
+    // Download installer JAR to a temp file
+    let temp_jar = forge_json_path.with_file_name("forge-installer-temp.jar");
+    download_file_with_progress(app, "Forge installer", FORGE_INSTALLER_URL, &temp_jar).await?;
+
+    // Extract version.json from the installer JAR (it's a zip)
+    let zip_file = fs::File::open(&temp_jar).map_err(|e| format!("Failed to open installer: {}", e))?;
+    let mut archive = zip::ZipArchive::new(zip_file).map_err(|e| format!("Invalid installer JAR: {}", e))?;
+
+    let mut found_version_json = false;
+    for i in 0..archive.len() {
+        if let Ok(mut entry) = archive.by_index(i) {
+            if entry.name() == "version.json" {
+                let mut content = String::new();
+                entry.read_to_string(&mut content).map_err(|e| format!("Failed to read version.json: {}", e))?;
+                fs::write(forge_json_path, &content).map_err(|e| format!("Failed to write Forge JSON: {}", e))?;
+                found_version_json = true;
+                break;
+            }
+        }
+    }
+
+    if !found_version_json {
+        let mut names: Vec<String> = Vec::new();
+        for i in 0..archive.len() {
+            if let Ok(entry) = archive.by_index(i) {
+                names.push(entry.name().to_string());
+            }
+        }
+        let _ = fs::write(
+            forge_json_path.with_file_name("installer-contents.txt"),
+            names.join("\n"),
+        );
+        let _ = fs::remove_file(&temp_jar);
+        return Err(format!(
+            "version.json not found in Forge installer. Contents: {:?}",
+            &names[..20.min(names.len())]
+        ));
+    }
+
+    let _ = fs::remove_file(&temp_jar);
+    Ok(())
+}
 
 const SUPABASE_URL: &str = "https://wziuqwtunlovtyxleles.supabase.co";
 const SUPABASE_ANON_KEY: &str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aXVxd3R1bmxvdnR5eGxlbGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2OTI0MTYsImV4cCI6MjA5OTI2ODQxNn0.4mVMKOpLhx9_bfwBRnZAfXgiAJAmockvevMI5FkPRXg";
@@ -454,16 +514,9 @@ async fn download_game(
             .build()
             .map_err(|e| e.to_string())?;
 
-        // Download Forge version JSON from Forge Maven
+        // Download Forge version JSON from installer JAR
         if !forge_json_path.exists() {
-            let _ = app.emit("download-progress", &DownloadProgress {
-                file: "Downloading Forge version info...".to_string(),
-                progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
-            });
-            fs::create_dir_all(&versions_dir).ok();
-            download_file_with_progress(&app, "Forge version JSON",
-                "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.20/forge-1.20.1-47.4.20.json",
-                &forge_json_path).await.ok();
+            download_forge_json(&app, &forge_json_path).await.ok();
         }
 
         // Download vanilla 1.20.1 version JSON for client jar + asset index URL
@@ -767,16 +820,9 @@ async fn launch_game(
             .build()
             .map_err(|e| e.to_string())?;
 
-        // Download Forge version JSON
+        // Download Forge version JSON from installer JAR
         if !forge_version_json.exists() {
-            let _ = app.emit("download-progress", &DownloadProgress {
-                file: "Downloading Forge version info...".to_string(),
-                progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
-            });
-            fs::create_dir_all(forge_version_json.parent().unwrap()).ok();
-            download_file_with_progress(&app, "Forge JSON",
-                "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.20/forge-1.20.1-47.4.20.json",
-                &forge_version_json).await
+            download_forge_json(&app, &forge_version_json).await
                 .map_err(|e| format!("Failed to download Forge JSON: {}", e))?;
         }
 
