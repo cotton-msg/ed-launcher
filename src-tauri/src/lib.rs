@@ -443,9 +443,178 @@ async fn download_game(
         }
     }
 
+    // Download Forge version JSON + libraries + client jar from Maven repos
+    let versions_dir = game_dir.join("versions").join("1.20.1-forge-47.4.20");
+    let forge_json_path = versions_dir.join("1.20.1-forge-47.4.20.json");
+    let client_jar_path = versions_dir.join("1.20.1-47.4.20.jar");
+    if !forge_json_path.exists() || !client_jar_path.exists() {
+        let client = reqwest::Client::builder()
+            .user_agent("GrandEdenLauncher/1.0")
+            .build()
+            .map_err(|e| e.to_string())?;
+
+        // Download Forge version JSON from Forge Maven
+        if !forge_json_path.exists() {
+            let _ = app.emit("download-progress", &DownloadProgress {
+                file: "Downloading Forge version info...".to_string(),
+                progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+            });
+            fs::create_dir_all(&versions_dir).ok();
+            download_file_with_progress(&app, "Forge version JSON",
+                "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.20/forge-1.20.1-47.4.20.json",
+                &forge_json_path).await.ok();
+        }
+
+        // Download vanilla 1.20.1 version JSON for client jar + asset index URL
+        let vanilla_version_json_path = versions_dir.join("1.20.1.json");
+        if !vanilla_version_json_path.exists() {
+            let manifest_resp = client.get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
+                .send().await.map_err(|e| e.to_string())?;
+            let manifest: serde_json::Value = manifest_resp.json().await.map_err(|e| e.to_string())?;
+            if let Some(versions) = manifest.get("versions").and_then(|v| v.as_array()) {
+                if let Some(v1201) = versions.iter().find(|v| v.get("id").and_then(|i| i.as_str()) == Some("1.20.1")) {
+                    if let Some(url) = v1201.get("url").and_then(|u| u.as_str()) {
+                        let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+                        let vanilla_json: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+                        let vanilla_json_str = serde_json::to_string(&vanilla_json).unwrap_or_default();
+                        fs::create_dir_all(&versions_dir).ok();
+                        fs::write(&vanilla_version_json_path, &vanilla_json_str).ok();
+
+                        // Download client jar from Mojang
+                        if !client_jar_path.exists() {
+                            if let Some(downloads) = vanilla_json.get("downloads") {
+                                if let Some(client_dl) = downloads.get("client") {
+                                    if let Some(url) = client_dl.get("url").and_then(|u| u.as_str()) {
+                                        let _ = app.emit("download-progress", &DownloadProgress {
+                                            file: "Downloading Minecraft client...".to_string(),
+                                            progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+                                        });
+                                        download_file_with_progress(&app, "Minecraft client.jar", url, &client_jar_path).await.ok();
+                                    }
+                                }
+                            }
+                        }
+
+                        // Download asset index
+                        let assets_dir = game_dir.join("assets");
+                        let indexes_dir = assets_dir.join("indexes");
+                        fs::create_dir_all(&indexes_dir).ok();
+                        if let Some(asset_index) = vanilla_json.get("assetIndex") {
+                            let asset_index_id = asset_index.get("id").and_then(|v| v.as_str()).unwrap_or("5");
+                            let asset_index_url = asset_index.get("url").and_then(|v| v.as_str());
+                            let asset_index_path = indexes_dir.join(format!("{}.json", asset_index_id));
+                            if !asset_index_path.exists() {
+                                if let Some(idx_url) = asset_index_url {
+                                    let _ = app.emit("download-progress", &DownloadProgress {
+                                        file: "Downloading asset index...".to_string(),
+                                        progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+                                    });
+                                    download_file_with_progress(&app, "Asset index", idx_url, &asset_index_path).await.ok();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Download Forge libraries from Forge JSON
+        if forge_json_path.exists() {
+            let json_str = fs::read_to_string(&forge_json_path).unwrap_or_default();
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_str) {
+                let libs_dir = game_dir.join("libraries");
+                if let Some(libraries) = json.get("libraries").and_then(|v| v.as_array()) {
+                    let mut to_download: Vec<(String, PathBuf)> = Vec::new();
+                    for lib in libraries {
+                        if let Some(downloads) = lib.get("downloads") {
+                            if let Some(artifact) = downloads.get("artifact") {
+                                if let Some(url) = artifact.get("url").and_then(|v| v.as_str()) {
+                                    if let Some(path) = artifact.get("path").and_then(|v| v.as_str()) {
+                                        let local = libs_dir.join(path);
+                                        if !local.exists() {
+                                            to_download.push((url.to_string(), local));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    let total = to_download.len();
+                    if total > 0 {
+                        let _ = app.emit("download-progress", &DownloadProgress {
+                            file: format!("Downloading {} libraries...", total),
+                            progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+                        });
+                        for (i, (url, local_path)) in to_download.iter().enumerate() {
+                            if let Some(parent) = local_path.parent() {
+                                fs::create_dir_all(parent).ok();
+                            }
+                            let label = format!("Lib {}/{}", i + 1, total);
+                            download_file_with_progress(&app, &label, url, local_path).await.ok();
+                            let progress = ((i + 1) as f64 / total as f64) * 100.0;
+                            let _ = app.emit("download-progress", &DownloadProgress {
+                                file: label,
+                                progress,
+                                downloaded_mb: (i + 1) as f64,
+                                total_mb: total as f64,
+                                speed_mb_s: 0.0,
+                            });
+                        }
+                    }
+                }
+
+                // Download vanilla libraries from vanilla JSON
+                if vanilla_version_json_path.exists() {
+                    let vanilla_str = fs::read_to_string(&vanilla_version_json_path).unwrap_or_default();
+                    if let Ok(vanilla_json) = serde_json::from_str::<serde_json::Value>(&vanilla_str) {
+                        let libs_dir = game_dir.join("libraries");
+                        if let Some(libraries) = vanilla_json.get("libraries").and_then(|v| v.as_array()) {
+                            let mut to_download: Vec<(String, PathBuf)> = Vec::new();
+                            for lib in libraries {
+                                if let Some(downloads) = lib.get("downloads") {
+                                    if let Some(artifact) = downloads.get("artifact") {
+                                        if let Some(url) = artifact.get("url").and_then(|v| v.as_str()) {
+                                            if let Some(path) = artifact.get("path").and_then(|v| v.as_str()) {
+                                                let local = libs_dir.join(path);
+                                                if !local.exists() {
+                                                    to_download.push((url.to_string(), local));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            let total = to_download.len();
+                            if total > 0 {
+                                let _ = app.emit("download-progress", &DownloadProgress {
+                                    file: format!("Downloading {} MC libraries...", total),
+                                    progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+                                });
+                                for (i, (url, local_path)) in to_download.iter().enumerate() {
+                                    if let Some(parent) = local_path.parent() {
+                                        fs::create_dir_all(parent).ok();
+                                    }
+                                    let label = format!("MC Lib {}/{}", i + 1, total);
+                                    download_file_with_progress(&app, &label, url, local_path).await.ok();
+                                    let progress = ((i + 1) as f64 / total as f64) * 100.0;
+                                    let _ = app.emit("download-progress", &DownloadProgress {
+                                        file: label,
+                                        progress,
+                                        downloaded_mb: (i + 1) as f64,
+                                        total_mb: total as f64,
+                                        speed_mb_s: 0.0,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Download Minecraft assets from Mojang CDN
-    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
-    let assets_dir = mc_dir.join("assets");
+    let assets_dir = game_dir.join("assets");
     let indexes_dir = assets_dir.join("indexes");
     let objects_dir = assets_dir.join("objects");
     if let Some(index_file) = find_asset_index(&indexes_dir) {
@@ -580,18 +749,13 @@ async fn launch_game(
         return Err("Game files not found. Please download game files first.".to_string());
     }
 
-    // Forge libraries from .minecraft
-    let mc_libs = dirs_next::home_dir()
-        .unwrap_or_default()
-        .join(".minecraft")
-        .join("libraries");
+    // Everything lives inside game_dir (self-contained .minecraft)
+    let mc_libs = game_dir.join("libraries");
     let libs_str = mc_libs.to_string_lossy().to_string();
 
     let sep = if cfg!(windows) { ";" } else { ":" };
 
-    let mc_dir = dirs_next::home_dir()
-        .unwrap_or_default()
-        .join(".minecraft");
+    let mc_dir = &game_dir;
     let mc_versions = mc_dir.join("versions");
     let forge_version_json = mc_versions.join("1.20.1-forge-47.4.20/1.20.1-forge-47.4.20.json");
 
