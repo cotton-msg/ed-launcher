@@ -26,3 +26,8 @@ dist-ssr
 # Rust / Tauri build output
 src-tauri/target/
 src-tauri/gen/
+
+# Extracted class files
+com/
+META-INF/
+upload-*.mjs

@@ -346,6 +346,24 @@ async fn list_supabase_files(prefix: &str) -> Result<Vec<String>, String> {
     Ok(all_files)
 }
 
+fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) {
+    if let Ok(entries) = fs::read_dir(src) {
+        for entry in entries.flatten() {
+            let src_path = entry.path();
+            let dst_path = dst.join(entry.file_name());
+            if src_path.is_dir() {
+                fs::create_dir_all(&dst_path).ok();
+                copy_dir_recursive(&src_path, &dst_path);
+            } else {
+                if let Some(parent) = dst_path.parent() {
+                    fs::create_dir_all(parent).ok();
+                }
+                fs::copy(&src_path, &dst_path).ok();
+            }
+        }
+    }
+}
+
 #[tauri::command]
 async fn download_game(
     app: tauri::AppHandle,
@@ -440,6 +458,38 @@ async fn download_game(
                 total_mb: total_files as f64,
                 speed_mb_s: 0.0,
             });
+        }
+    }
+
+    // If .minecraft exists locally, copy Forge files from it (avoids re-downloading)
+    if let Some(home) = dirs_next::home_dir() {
+        let local_minecraft = home.join(".minecraft");
+        let versions_dir = game_dir.join("versions").join("1.20.1-forge-47.4.20");
+        let local_versions = local_minecraft.join("versions").join("1.20.1-forge-47.4.20");
+        if local_versions.exists() && !versions_dir.exists() {
+            fs::create_dir_all(&versions_dir).ok();
+            let local_json = local_versions.join("1.20.1-forge-47.4.20.json");
+            let local_jar = local_versions.join("1.20.1-47.4.20.jar");
+            if local_json.exists() {
+                fs::copy(&local_json, versions_dir.join("1.20.1-forge-47.4.20.json")).ok();
+            }
+            if local_jar.exists() {
+                fs::copy(&local_jar, versions_dir.join("1.20.1-47.4.20.jar")).ok();
+            }
+        }
+        // Copy libraries from .minecraft
+        let local_libs = local_minecraft.join("libraries");
+        let target_libs = game_dir.join("libraries");
+        if local_libs.exists() && !target_libs.exists() {
+            fs::create_dir_all(&target_libs).ok();
+            copy_dir_recursive(&local_libs, &target_libs);
+        }
+        // Copy assets from .minecraft
+        let local_assets = local_minecraft.join("assets");
+        let target_assets = game_dir.join("assets");
+        if local_assets.exists() && !target_assets.exists() {
+            fs::create_dir_all(&target_assets).ok();
+            copy_dir_recursive(&local_assets, &target_assets);
         }
     }
 
@@ -749,13 +799,22 @@ async fn launch_game(
         return Err("Game files not found. Please download game files first.".to_string());
     }
 
-    // Everything lives inside game_dir (self-contained .minecraft)
-    let mc_libs = game_dir.join("libraries");
+    // Everything lives inside game_dir (self-contained .minecraft), fallback to ~/.minecraft
+    let home_mc = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
+    let mc_libs = if game_dir.join("libraries").exists() {
+        game_dir.join("libraries")
+    } else {
+        home_mc.join("libraries")
+    };
     let libs_str = mc_libs.to_string_lossy().to_string();
 
     let sep = if cfg!(windows) { ";" } else { ":" };
 
-    let mc_dir = &game_dir;
+    let mc_dir = if game_dir.join("versions").exists() {
+        &game_dir
+    } else {
+        &home_mc
+    };
     let mc_versions = mc_dir.join("versions");
     let forge_version_json = mc_versions.join("1.20.1-forge-47.4.20/1.20.1-forge-47.4.20.json");
 
