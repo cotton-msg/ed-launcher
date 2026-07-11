@@ -406,12 +406,20 @@ async fn list_supabase_files(prefix: &str) -> Result<Vec<String>, String> {
     Ok(all_files)
 }
 
+fn get_game_dir_from_path(_app: &tauri::AppHandle, game_path: &str) -> PathBuf {
+    if !game_path.is_empty() {
+        return PathBuf::from(game_path);
+    }
+    dirs_next::home_dir().unwrap_or_default().join(".minecraft")
+}
+
 #[tauri::command]
 async fn download_game(
     app: tauri::AppHandle,
-    _game_path: String,
+    game_path: String,
 ) -> Result<bool, String> {
     let game_dir = get_app_data_dir(&app).join("game");
+    let mc_dir = get_game_dir_from_path(&app, &game_path);
     fs::create_dir_all(&game_dir).map_err(|e| e.to_string())?;
     // Download Java from Supabase Storage
     let java_dir = game_dir.join("java");
@@ -458,8 +466,7 @@ async fn download_game(
         }
     }
 
-    // Download version folder (mods, configs) from Supabase into ~/.minecraft
-    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
+    // Download version folder (mods, configs) from Supabase into mc_dir
     let mc_mods_dir = mc_dir.join("mods");
     if !mc_mods_dir.exists() {
         let _ = app.emit("download-progress", &DownloadProgress {
@@ -479,7 +486,8 @@ async fn download_game(
                 SUPABASE_URL, SUPABASE_BUCKET, file_path
             );
             
-            let local_path = mc_dir.join(file_path);
+            let relative_path = file_path.strip_prefix("version/").unwrap_or(file_path);
+            let local_path = mc_dir.join(relative_path);
             
             if let Some(parent) = local_path.parent() {
                 fs::create_dir_all(parent).ok();
@@ -504,7 +512,7 @@ async fn download_game(
         }
     }
 
-    // Download Forge version JSON + libraries + client jar into ~/.minecraft
+    // Download Forge version JSON + client jar into ~/.minecraft
     let versions_dir = mc_dir.join("versions").join("1.20.1-forge-47.4.20");
     let forge_json_path = versions_dir.join("1.20.1-forge-47.4.20.json");
     let client_jar_path = versions_dir.join("1.20.1-47.4.20.jar");
@@ -570,94 +578,95 @@ async fn download_game(
                 }
             }
         }
+    }
 
-        // Download Forge libraries from Forge JSON
-        if forge_json_path.exists() {
-            let json_str = fs::read_to_string(&forge_json_path).unwrap_or_default();
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_str) {
-                let libs_dir = mc_dir.join("libraries");
-                if let Some(libraries) = json.get("libraries").and_then(|v| v.as_array()) {
-                    let mut to_download: Vec<(String, PathBuf)> = Vec::new();
-                    for lib in libraries {
-                        if let Some(downloads) = lib.get("downloads") {
-                            if let Some(artifact) = downloads.get("artifact") {
-                                if let Some(url) = artifact.get("url").and_then(|v| v.as_str()) {
-                                    if let Some(path) = artifact.get("path").and_then(|v| v.as_str()) {
-                                        let local = libs_dir.join(path);
-                                        if !local.exists() {
-                                            to_download.push((url.to_string(), local));
-                                        }
+    // Download Forge libraries — always check, independent of JSON/client jar block
+    if forge_json_path.exists() {
+        let json_str = fs::read_to_string(&forge_json_path).unwrap_or_default();
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_str) {
+            let libs_dir = mc_dir.join("libraries");
+            if let Some(libraries) = json.get("libraries").and_then(|v| v.as_array()) {
+                let mut to_download: Vec<(String, PathBuf)> = Vec::new();
+                for lib in libraries {
+                    if let Some(downloads) = lib.get("downloads") {
+                        if let Some(artifact) = downloads.get("artifact") {
+                            if let Some(url) = artifact.get("url").and_then(|v| v.as_str()) {
+                                if let Some(path) = artifact.get("path").and_then(|v| v.as_str()) {
+                                    let local = libs_dir.join(path);
+                                    if !local.exists() {
+                                        to_download.push((url.to_string(), local));
                                     }
                                 }
                             }
                         }
                     }
-                    let total = to_download.len();
-                    if total > 0 {
-                        let _ = app.emit("download-progress", &DownloadProgress {
-                            file: format!("Downloading {} libraries...", total),
-                            progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
-                        });
-                        for (i, (url, local_path)) in to_download.iter().enumerate() {
-                            if let Some(parent) = local_path.parent() {
-                                fs::create_dir_all(parent).ok();
-                            }
-                            let label = format!("Lib {}/{}", i + 1, total);
-                            download_file_with_progress(&app, &label, url, local_path).await.ok();
-                            let progress = ((i + 1) as f64 / total as f64) * 100.0;
-                            let _ = app.emit("download-progress", &DownloadProgress {
-                                file: label,
-                                progress,
-                                downloaded_mb: (i + 1) as f64,
-                                total_mb: total as f64,
-                                speed_mb_s: 0.0,
-                            });
+                }
+                let total = to_download.len();
+                if total > 0 {
+                    let _ = app.emit("download-progress", &DownloadProgress {
+                        file: format!("Downloading {} libraries...", total),
+                        progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+                    });
+                    for (i, (url, local_path)) in to_download.iter().enumerate() {
+                        if let Some(parent) = local_path.parent() {
+                            fs::create_dir_all(parent).ok();
                         }
+                        let label = format!("Lib {}/{}", i + 1, total);
+                        download_file_with_progress(&app, &label, url, local_path).await.ok();
+                        let progress = ((i + 1) as f64 / total as f64) * 100.0;
+                        let _ = app.emit("download-progress", &DownloadProgress {
+                            file: label,
+                            progress,
+                            downloaded_mb: (i + 1) as f64,
+                            total_mb: total as f64,
+                            speed_mb_s: 0.0,
+                        });
                     }
                 }
+            }
 
-                // Download vanilla libraries from vanilla JSON
-                if vanilla_version_json_path.exists() {
-                    let vanilla_str = fs::read_to_string(&vanilla_version_json_path).unwrap_or_default();
-                    if let Ok(vanilla_json) = serde_json::from_str::<serde_json::Value>(&vanilla_str) {
-                        let libs_dir = mc_dir.join("libraries");
-                        if let Some(libraries) = vanilla_json.get("libraries").and_then(|v| v.as_array()) {
-                            let mut to_download: Vec<(String, PathBuf)> = Vec::new();
-                            for lib in libraries {
-                                if let Some(downloads) = lib.get("downloads") {
-                                    if let Some(artifact) = downloads.get("artifact") {
-                                        if let Some(url) = artifact.get("url").and_then(|v| v.as_str()) {
-                                            if let Some(path) = artifact.get("path").and_then(|v| v.as_str()) {
-                                                let local = libs_dir.join(path);
-                                                if !local.exists() {
-                                                    to_download.push((url.to_string(), local));
-                                                }
+            // Download vanilla libraries — always check, independent of JSON/client jar block
+            let vanilla_version_json_path = versions_dir.join("1.20.1.json");
+            if vanilla_version_json_path.exists() {
+                let vanilla_str = fs::read_to_string(&vanilla_version_json_path).unwrap_or_default();
+                if let Ok(vanilla_json) = serde_json::from_str::<serde_json::Value>(&vanilla_str) {
+                    let libs_dir = mc_dir.join("libraries");
+                    if let Some(libraries) = vanilla_json.get("libraries").and_then(|v| v.as_array()) {
+                        let mut to_download: Vec<(String, PathBuf)> = Vec::new();
+                        for lib in libraries {
+                            if let Some(downloads) = lib.get("downloads") {
+                                if let Some(artifact) = downloads.get("artifact") {
+                                    if let Some(url) = artifact.get("url").and_then(|v| v.as_str()) {
+                                        if let Some(path) = artifact.get("path").and_then(|v| v.as_str()) {
+                                            let local = libs_dir.join(path);
+                                            if !local.exists() {
+                                                to_download.push((url.to_string(), local));
                                             }
                                         }
                                     }
                                 }
                             }
-                            let total = to_download.len();
-                            if total > 0 {
-                                let _ = app.emit("download-progress", &DownloadProgress {
-                                    file: format!("Downloading {} MC libraries...", total),
-                                    progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
-                                });
-                                for (i, (url, local_path)) in to_download.iter().enumerate() {
-                                    if let Some(parent) = local_path.parent() {
-                                        fs::create_dir_all(parent).ok();
-                                    }
-                                    let label = format!("MC Lib {}/{}", i + 1, total);
-                                    download_file_with_progress(&app, &label, url, local_path).await.ok();
-                                    let progress = ((i + 1) as f64 / total as f64) * 100.0;
-                                    let _ = app.emit("download-progress", &DownloadProgress {
-                                        file: label,
-                                        progress,
-                                        downloaded_mb: (i + 1) as f64,
-                                        total_mb: total as f64,
-                                        speed_mb_s: 0.0,
-                                    });
+                        }
+                        let total = to_download.len();
+                        if total > 0 {
+                            let _ = app.emit("download-progress", &DownloadProgress {
+                                file: format!("Downloading {} MC libraries...", total),
+                                progress: 0.0, downloaded_mb: 0.0, total_mb: 0.0, speed_mb_s: 0.0,
+                            });
+                            for (i, (url, local_path)) in to_download.iter().enumerate() {
+                                if let Some(parent) = local_path.parent() {
+                                    fs::create_dir_all(parent).ok();
                                 }
+                                let label = format!("MC Lib {}/{}", i + 1, total);
+                                download_file_with_progress(&app, &label, url, local_path).await.ok();
+                                let progress = ((i + 1) as f64 / total as f64) * 100.0;
+                                let _ = app.emit("download-progress", &DownloadProgress {
+                                    file: label,
+                                    progress,
+                                    downloaded_mb: (i + 1) as f64,
+                                    total_mb: total as f64,
+                                    speed_mb_s: 0.0,
+                                });
                             }
                         }
                     }
@@ -797,8 +806,8 @@ async fn launch_game(
         return Err("Java not found. Please download game files first.".to_string());
     }
 
-    // All Minecraft files live in ~/.minecraft
-    let mc_dir = dirs_next::home_dir().unwrap_or_default().join(".minecraft");
+    // All Minecraft files live in mc_dir
+    let mc_dir = get_game_dir_from_path(&app, &settings.game_path);
     let mc_versions = mc_dir.join("versions").join("1.20.1-forge-47.4.20");
     let forge_version_json = mc_versions.join("1.20.1-forge-47.4.20.json");
     let client_jar = mc_versions.join("1.20.1-47.4.20.jar");
@@ -906,7 +915,7 @@ async fn launch_game(
         }
 
         // Download missing vanilla libraries
-        let vanilla_json_path = mc_versions.join("1.20.1-forge-47.4.20/1.20.1.json");
+        let vanilla_json_path = mc_versions.join("1.20.1.json");
         if vanilla_json_path.exists() {
             let vanilla_str = fs::read_to_string(&vanilla_json_path).unwrap_or_default();
             if let Ok(vanilla_json) = serde_json::from_str::<serde_json::Value>(&vanilla_str) {

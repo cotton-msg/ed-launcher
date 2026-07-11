@@ -31,3 +31,7 @@ src-tauri/gen/
 com/
 META-INF/
 upload-*.mjs
+
+# Test artifacts
+test_clean_install/backup/
+test_clean_install/.minecraft/

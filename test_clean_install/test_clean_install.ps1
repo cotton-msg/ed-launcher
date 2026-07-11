@@ -2,17 +2,17 @@ $ErrorActionPreference = "Continue"
 $SUPABASE_URL = "https://wziuqwtunlovtyxleles.supabase.co"
 $SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aXVxd3R1bmxvdnR5eGxlbGVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2OTI0MTYsImV4cCI6MjA5OTI2ODQxNn0.4mVMKOpLhx9_bfwBRnZAfXgiAJAmockvevMI5FkPRXg"
 
-$testDir = "C:\Users\supminer\Documents\ed-launcher\test_clean_install"
+$testDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backupDir = "$testDir\backup"
 $testMcDir = "$testDir\.minecraft"
 $testAppData = "$testDir\app_data\game"
 
-$results = @()
+$script:results = @()
 
 function Test-Step {
     param([string]$Name, [bool]$Pass, [string]$Detail = "")
     $status = if ($Pass) { "PASS" } else { "FAIL" }
-    $results += [PSCustomObject]@{ Step = $Name; Status = $Status; Detail = $Detail }
+    $script:results += [PSCustomObject]@{ Step = $Name; Status = $Status; Detail = $Detail }
     Write-Host "[$status] $Name" -ForegroundColor $(if ($Pass) { "Green" } else { "Red" })
     if ($Detail) { Write-Host "  -> $Detail" -ForegroundColor Gray }
 }
@@ -39,21 +39,23 @@ Test-Step "Create isolated test directories" $true
 # ---- STEP 2: Test Supabase connectivity ----
 Write-Host "`n--- Phase 2: Test Supabase Storage ---" -ForegroundColor Yellow
 
-# List java files
-$body = '{"prefix":"java/","limit":1000,"offset":0}'
-$resp = curl.exe -s -X POST "$SUPABASE_URL/storage/v1/object/list/game-files" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" -H "Content-Type: application/json" -d $body 2>&1
-$javaFiles = $resp | ConvertFrom-Json -ErrorAction SilentlyContinue
-$javaCount = if ($javaFiles) { $javaFiles.Count } else { 0 }
-Test-Step "Supabase: list java files" ($javaCount -gt 0) "$javaCount files"
+$headers = @{apikey=$SUPABASE_KEY; Authorization="Bearer $SUPABASE_KEY"}
 
-# Check java.exe exists in listing
-$javaExe = $javaFiles | Where-Object { $_.name -eq "java.exe" -and $_.id -ne $null }
-Test-Step "Supabase: java.exe exists" ($null -ne $javaExe) "Size: $($javaExe.metadata.contentLength) bytes"
+# List java files
+$body = @{prefix="java/"; limit=1000; offset=0} | ConvertTo-Json -Compress
+$javaFiles = try { Invoke-RestMethod -Uri "$SUPABASE_URL/storage/v1/object/list/game-files" -Method Post -Headers $headers -ContentType "application/json" -Body $body } catch { $null }
+$javaCount = if ($javaFiles) { $javaFiles.Count } else { 0 }
+Test-Step "Supabase: list java files" ($javaCount -gt 0) "$javaCount items"
+
+# Check java.exe exists in java/bin/
+$bodyBin = @{prefix="java/bin/"; limit=1000; offset=0} | ConvertTo-Json -Compress
+$javaBinFiles = try { Invoke-RestMethod -Uri "$SUPABASE_URL/storage/v1/object/list/game-files" -Method Post -Headers $headers -ContentType "application/json" -Body $bodyBin } catch { $null }
+$javaExe = $javaBinFiles | Where-Object { $_.name -eq "java.exe" }
+Test-Step "Supabase: java/bin/java.exe exists" ($null -ne $javaExe)
 
 # List version files (mods/configs)
-$body2 = '{"prefix":"version/","limit":1000,"offset":0}'
-$resp2 = curl.exe -s -X POST "$SUPABASE_URL/storage/v1/object/list/game-files" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY" -H "Content-Type: application/json" -d $body2 2>&1
-$versionFiles = $resp2 | ConvertFrom-Json -ErrorAction SilentlyContinue
+$body2 = @{prefix="version/"; limit=1000; offset=0} | ConvertTo-Json -Compress
+$versionFiles = try { Invoke-RestMethod -Uri "$SUPABASE_URL/storage/v1/object/list/game-files" -Method Post -Headers $headers -ContentType "application/json" -Body $body2 } catch { $null }
 $versionCount = if ($versionFiles) { $versionFiles.Count } else { 0 }
 Test-Step "Supabase: list version files" ($versionCount -gt 0) "$versionCount items"
 
@@ -201,15 +203,19 @@ Test-Step "Forge main class" ($mainClass -eq "cpw.mods.bootstraplauncher.Bootstr
 
 $jvmArgs = $forgeJson.arguments.jvm
 $hasModulePath = $jvmArgs | Where-Object { $_ -eq "-p" }
-$hasClassPath = $jvmArgs | Where-Object { $_ -eq "-cp" }
 Test-Step "Forge JVM args have -p (module path)" ($null -ne $hasModulePath)
-Test-Step "Forge JVM args have -cp (classpath)" ($null -ne $hasClassPath)
+
+$hasIgnoreList = $jvmArgs | Where-Object { $_ -match 'DignoreList=' }
+Test-Step "Forge JVM args have -DignoreList" ($null -ne $hasIgnoreList)
+
+$hasAddOpens = $jvmArgs | Where-Object { $_ -eq "--add-opens" }
+Test-Step "Forge JVM args have --add-opens" ($null -ne $hasAddOpens)
 
 $gameArgs = $forgeJson.arguments.game
-$hasGameDir = $gameArgs | Where-Object { $_ -match '\$\{game_directory\}' }
-$hasAssetsRoot = $gameArgs | Where-Object { $_ -match '\$\{assets_root\}' }
-Test-Step "Forge game args have \${game_directory}" ($null -ne $hasGameDir)
-Test-Step "Forge game args have \${assets_root}" ($null -ne $hasAssetsRoot)
+$hasForgeTarget = $gameArgs | Where-Object { $_ -match 'forgeclient' }
+$hasForgeVersion = $gameArgs | Where-Object { $_ -match '47\.4\.20' }
+Test-Step "Forge game args have --launchTarget forgeclient" ($null -ne $hasForgeTarget)
+Test-Step "Forge game args have --fml.forgeVersion" ($null -ne $hasForgeVersion)
 
 # ---- STEP 9: Test actual launch (short timeout) ----
 Write-Host "`n--- Phase 9: Test game launch (10s timeout) ---" -ForegroundColor Yellow
@@ -313,13 +319,13 @@ Write-Host "`n  Libraries downloaded: $libFileCount files" -ForegroundColor Gray
 
 # ---- SUMMARY ----
 Write-Host "`n========================================" -ForegroundColor Cyan
-$passed = ($results | Where-Object { $_.Status -eq "PASS" }).Count
-$failed = ($results | Where-Object { $_.Status -eq "FAIL" }).Count
-Write-Host "RESULTS: $passed passed, $failed failed out of $($results.Count) tests" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Yellow" })
+$passed = ($script:results | Where-Object { $_.Status -eq "PASS" }).Count
+$failed = ($script:results | Where-Object { $_.Status -eq "FAIL" }).Count
+Write-Host "RESULTS: $passed passed, $failed failed out of $($script:results.Count) tests" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Yellow" })
 
 if ($failed -gt 0) {
     Write-Host "`nFailed tests:" -ForegroundColor Red
-    $results | Where-Object { $_.Status -eq "FAIL" } | ForEach-Object {
+    $script:results | Where-Object { $_.Status -eq "FAIL" } | ForEach-Object {
         Write-Host "  [FAIL] $($_.Step): $($_.Detail)" -ForegroundColor Red
     }
 }

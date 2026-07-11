@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Stop"
-$testDir = "C:\Users\supminer\Documents\ed-launcher\test_clean_install"
+$testDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $realMcDir = "$env:USERPROFILE\.minecraft"
 $backupDir = "$testDir\backup_real"
 $emptyMcDir = "$testDir\empty_minecraft"
-$launcherExe = "C:\Users\supminer\Documents\ed-launcher\src-tauri\target\release\grand-eden-launcher.exe"
+$launcherExe = Join-Path (Split-Path -Parent $testDir) "src-tauri\target\release\grand-eden-launcher.exe"
 
 Write-Host "=== LIVE LAUNCHER TEST (isolated ~/.minecraft) ===" -ForegroundColor Cyan
 

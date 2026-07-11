@@ -39,14 +39,6 @@
   }
 
   onMount(async () => {
-    try {
-      const fs = await import('@tauri-apps/plugin-fs');
-      const logPath = 'C:\\Users\\supminer\\.minecraft\\onmount_debug.log';
-      await fs.writeTextFile(logPath, `onMount started\nstatus: ${status}\n`);
-    } catch (e) {
-      console.error('Failed to log onMount:', e);
-    }
-    
     await refreshStatus();
     statusInterval = setInterval(refreshStatus, 30000);
 
@@ -79,18 +71,6 @@
   }
 
   async function startDownload() {
-    const log = async (msg: string) => {
-      try {
-        const fs = await import('@tauri-apps/plugin-fs');
-        const logPath = 'C:\\Users\\supminer\\.minecraft\\frontend_debug.log';
-        const time = new Date().toISOString();
-        await fs.appendTextFile(logPath, `[${time}] ${msg}\n`);
-      } catch (e) {
-        console.error('Failed to log:', e);
-      }
-    };
-
-    await log('startDownload called');
     status = 'downloading';
     progress = 0;
     downloadedMB = 0;
@@ -98,23 +78,17 @@
     currentFile = '';
 
     try {
-      await log('Calling downloadGame...');
       const success = await downloadGame(settings.game_path);
-      await log(`downloadGame result: ${success}`);
       if (success) {
         status = 'playing';
         try {
-          await log('Calling launchGame...');
           await launchGame(nickname, settings);
-          await log('launchGame completed');
         } catch (e) {
-          await log(`launchGame error: ${e}`);
           error = `Failed to launch: ${e}`;
           status = 'idle';
         }
       }
     } catch (e) {
-      await log(`downloadGame error: ${e}`);
       error = `Download failed: ${e}`;
       status = 'idle';
     }
