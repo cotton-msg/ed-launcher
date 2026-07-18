@@ -81,3 +81,7 @@ export function onDownloadProgress(
     callback(event.payload);
   });
 }
+
+export async function reportGameInventory(nickname: string): Promise<boolean> {
+  return invoke<boolean>('report_game_inventory', { nickname });
+}

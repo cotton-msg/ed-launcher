@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grand Eden — Инвентарь игроков</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+
+  .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 20px; font-weight: 600; color: #f0f6fc; }
+  .header .badge { background: #238636; color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+  .header .stats { margin-left: auto; font-size: 13px; color: #8b949e; }
+
+  .toolbar { padding: 12px 32px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #21262d; background: #0d1117; position: sticky; top: 0; z-index: 10; }
+  .search { flex: 1; max-width: 400px; padding: 8px 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 14px; outline: none; }
+  .search:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); }
+  .search::placeholder { color: #484f58; }
+  .btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 13px; transition: background 0.15s; }
+  .btn:hover { background: #30363d; }
+  .btn.primary { background: #238636; border-color: #238636; color: #fff; }
+  .btn.primary:hover { background: #2ea043; }
+  .sort-info { font-size: 12px; color: #8b949e; margin-left: 8px; }
+
+  .container { display: flex; height: calc(100vh - 105px); }
+
+  .player-list { flex: 1; overflow-y: auto; border-right: 1px solid #21262d; min-width: 0; }
+  .player-list::-webkit-scrollbar { width: 8px; }
+  .player-list::-webkit-scrollbar-track { background: #0d1117; }
+  .player-list::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { position: sticky; top: 0; background: #161b22; padding: 10px 16px; text-align: left; font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #30363d; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: #c9d1d9; }
+  th .arrow { margin-left: 4px; opacity: 0.4; }
+  th.sorted .arrow { opacity: 1; color: #58a6ff; }
+  td { padding: 10px 16px; border-bottom: 1px solid #21262d; font-size: 14px; white-space: nowrap; }
+  tr { cursor: pointer; transition: background 0.1s; }
+  tr:hover { background: #161b22; }
+  tr.selected { background: #1c2333; border-left: 3px solid #58a6ff; }
+  .nickname { color: #58a6ff; font-weight: 500; }
+  .size { color: #8b949e; font-variant-numeric: tabular-nums; }
+  .time { color: #484f58; font-size: 13px; }
+
+  .file-panel { width: 480px; overflow-y: auto; background: #0d1117; display: flex; flex-direction: column; }
+  .file-panel::-webkit-scrollbar { width: 8px; }
+  .file-panel::-webkit-scrollbar-track { background: #0d1117; }
+  .file-panel::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid #21262d; background: #161b22; }
+  .panel-header h2 { font-size: 16px; color: #f0f6fc; margin-bottom: 4px; }
+  .panel-header .meta { font-size: 13px; color: #8b949e; display: flex; gap: 16px; }
+  .panel-header .meta span { display: flex; align-items: center; gap: 4px; }
+
+  .file-search { margin: 12px 20px; }
+  .file-search input { width: 100%; padding: 8px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 13px; outline: none; }
+  .file-search input:focus { border-color: #58a6ff; }
+
+  .file-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .file-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #21262d; font-size: 13px; }
+  .file-item:last-child { border-bottom: none; }
+  .file-path { color: #c9d1d9; word-break: break-all; flex: 1; margin-right: 12px; }
+  .file-path .dir { color: #8b949e; }
+  .file-path .name { color: #f0f6fc; }
+  .file-path .jar { color: #d2a8ff; }
+  .file-size { color: #8b949e; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
+
+  .folder-group { margin-top: 12px; }
+  .folder-label { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0 4px; border-bottom: 1px solid #21262d; margin-bottom: 4px; }
+
+  .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: #484f58; font-size: 14px; }
+  .loading { display: flex; align-items: center; justify-content: center; height: 100%; color: #8b949e; font-size: 14px; gap: 8px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-banner { background: #3d1f1f; border: 1px solid #6e3630; color: #f85149; padding: 12px 20px; margin: 12px 20px; border-radius: 6px; font-size: 13px; }
+
+  .folder-stats { display: flex; gap: 12px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid #21262d; }
+  .stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px 16px; min-width: 120px; }
+  .stat-card .label { font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .value { font-size: 18px; font-weight: 600; color: #f0f6fc; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Grand Eden Launcher</h1>
+  <span class="badge">Panel</span>
+  <div class="stats" id="headerStats">Загрузка...</div>
+</div>
+
+<div class="toolbar">
+  <input class="search" type="text" id="searchInput" placeholder="Поиск по нику..." autocomplete="off">
+  <button class="btn" id="sortSizeBtn" onclick="toggleSort('size')">По размеру</button>
+  <button class="btn" id="sortTimeBtn" onclick="toggleSort('time')">По дате</button>
+  <button class="btn" id="sortNameBtn" onclick="toggleSort('name')">По имени</button>
+  <button class="btn primary" onclick="refresh()">Обновить</button>
+  <span class="sort-info" id="sortInfo"></span>
+</div>
+
+<div class="container">
+  <div class="player-list" id="playerList">
+    <div class="loading"><div class="spinner"></div> Загрузка данных из Supabase...</div>
+  </div>
+  <div class="file-panel" id="filePanel">
+    <div class="empty">Выберите игрока для просмотра файлов</div>
+  </div>
+</div>
+
+<script>
+const SERVER_URL = window.location.origin || 'http://46.42.3.254:25566';
+
+let allData = [];
+let filteredData = [];
+let selectedNickname = null;
+let sortField = 'time';
+let sortAsc = false;
+
+async function fetchAll() {
+  const res = await fetch(`${SERVER_URL}/api/inventory`);
+  if (!res.ok) throw new Error(`Server ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function refresh() {
+  try {
+    document.getElementById('playerList').innerHTML = '<div class="loading"><div class="spinner"></div> Загрузка...</div>';
+    allData = await fetchAll();
+    applyFilter();
+    updateStats();
+  } catch (e) {
+    document.getElementById('playerList').innerHTML = `<div class="error-banner">Ошибка загрузки: ${e.message}<br><br>Убедитесь, что server.py запущен.</div>`;
+  }
+}
+
+function applyFilter() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  filteredData = allData.filter(r => !q || r.nickname.toLowerCase().includes(q));
+  sortData();
+  renderList();
+}
+
+function sortData() {
+  filteredData.sort((a, b) => {
+    let va, vb;
+    if (sortField === 'size') { va = a.total_size || 0; vb = b.total_size || 0; }
+    else if (sortField === 'time') { va = new Date(a.reported_at || 0); vb = new Date(b.reported_at || 0); }
+    else { va = a.nickname.toLowerCase(); vb = b.nickname.toLowerCase(); }
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+}
+
+function toggleSort(field) {
+  if (sortField === field) { sortAsc = !sortAsc; }
+  else { sortField = field; sortAsc = false; }
+  document.querySelectorAll('.toolbar .btn').forEach(b => b.classList.remove('sorted'));
+  sortData();
+  renderList();
+}
+
+function renderList() {
+  const el = document.getElementById('playerList');
+  if (!filteredData.length) {
+    el.innerHTML = '<div class="empty">Нет данных</div>';
+    return;
+  }
+  const arrows = { size: '▼', time: '▼', name: '▼' };
+  arrows[sortField] = sortAsc ? '▲' : '▼';
+
+  let html = `<table><thead><tr>
+    <th class="${sortField==='name'?'sorted':''}" onclick="toggleSort('name')">Ник <span class="arrow">${arrows.name}</span></th>
+    <th class="${sortField==='size'?'sorted':''}" onclick="toggleSort('size')">Размер <span class="arrow">${arrows.size}</span></th>
+    <th>Файлов</th>
+    <th class="${sortField==='time'?'sorted':''}" onclick="toggleSort('time')">Дата <span class="arrow">${arrows.time}</span></th>
+  </tr></thead><tbody>`;
+
+  for (const row of filteredData) {
+    const sel = row.nickname === selectedNickname ? ' selected' : '';
+    html += `<tr class="${sel}" onclick="selectPlayer('${esc(row.nickname)}')">
+      <td class="nickname">${esc(row.nickname)}</td>
+      <td class="size">${formatSize(row.total_size)}</td>
+      <td>${row.file_count || 0}</td>
+      <td class="time">${formatTime(row.reported_at)}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function selectPlayer(nickname) {
+  selectedNickname = nickname;
+  renderList();
+  const row = allData.find(r => r.nickname === nickname);
+  if (!row) return;
+  renderFilePanel(row);
+}
+
+function renderFilePanel(row) {
+  const panel = document.getElementById('filePanel');
+  const files = row.files || [];
+
+  let html = `<div class="panel-header">
+    <h2>${esc(row.nickname)}</h2>
+    <div class="meta">
+      <span>📂 ${row.file_count || 0} файлов</span>
+      <span>💾 ${formatSize(row.total_size)}</span>
+      <span>🕐 ${formatTime(row.reported_at)}</span>
+    </div>
+  </div>
+  <div class="file-search"><input type="text" id="fileSearchInput" placeholder="Фильтр файлов..." oninput="filterFiles()"></div>
+  <div class="folder-stats">`;
+
+  const folders = {};
+  for (const f of files) {
+    const parts = f.path.split(/[/\\]/);
+    const top = parts.length > 1 ? parts[0] : '(корень)';
+    if (!folders[top]) folders[top] = { count: 0, size: 0 };
+    folders[top].count++;
+    folders[top].size += f.size;
+  }
+
+  const sortedFolders = Object.entries(folders).sort((a, b) => b[1].size - a[1].size);
+  for (const [name, info] of sortedFolders) {
+    html += `<div class="stat-card"><div class="label">${esc(name)}</div><div class="value">${info.count} <span style="font-size:12px;color:#8b949e">файлов</span></div></div>`;
+  }
+  html += `</div><div class="file-list" id="fileListInner">`;
+
+  const sortedFiles = [...files].sort((a, b) => b.size - a.size);
+  for (const f of sortedFiles) {
+    const parts = f.path.split(/[/\\]/);
+    const dir = parts.length > 1 ? parts.slice(0, -1).join('/') + '/' : '';
+    const name = parts[parts.length - 1];
+    const isJar = name.endsWith('.jar');
+    const nameClass = isJar ? 'jar' : 'name';
+    html += `<div class="file-item" data-path="${esc(f.path.toLowerCase())}">
+      <span class="file-path">${dir ? `<span class="dir">${esc(dir)}</span>` : ''}<span class="${nameClass}">${esc(name)}</span></span>
+      <span class="file-size">${formatSize(f.size)}</span>
+    </div>`;
+  }
+  html += '</div>';
+  panel.innerHTML = html;
+}
+
+function filterFiles() {
+  const q = (document.getElementById('fileSearchInput')?.value || '').toLowerCase();
+  const items = document.querySelectorAll('#fileListInner .file-item');
+  items.forEach(el => {
+    el.style.display = el.dataset.path.includes(q) ? '' : 'none';
+  });
+}
+
+function updateStats() {
+  const total = allData.length;
+  const totalSize = allData.reduce((s, r) => s + (r.total_size || 0), 0);
+  document.getElementById('headerStats').textContent = `${total} игроков • ${formatSize(totalSize)} всего`;
+}
+
+function formatSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let v = bytes;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return v.toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+}
+
+function formatTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function esc(s) {
+  const el = document.createElement('span');
+  el.textContent = s;
+  return el.innerHTML;
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilter);
+refresh();
+</script>
+</body>
+</html>

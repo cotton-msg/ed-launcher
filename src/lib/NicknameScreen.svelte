@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { fade } from 'svelte/transition';
 
   export let initialNickname = '';
 
@@ -42,13 +43,7 @@
     nickname = (e.target as HTMLInputElement).value;
   }
 
-  // Track which characters are new for animation
-  let lastLen = 0;
-  $: if (nickname.length > lastLen) {
-    lastLen = nickname.length;
-  } else if (nickname.length < lastLen) {
-    lastLen = nickname.length;
-  }
+
 </script>
 
 <div class="nick-screen" in:fade>
@@ -105,10 +100,6 @@
     </div>
   </div>
 </div>
-
-<script context="module" lang="ts">
-  import { fade } from 'svelte/transition';
-</script>
 
 <style>
   .nick-screen {

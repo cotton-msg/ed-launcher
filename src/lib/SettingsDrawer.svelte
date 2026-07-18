@@ -36,9 +36,9 @@
     if (saveTimeout) clearTimeout(saveTimeout);
   });
 
-  function closeDrawer() {
+  async function closeDrawer() {
     if (dirty) {
-      saveSettings(settings);
+      await saveSettings(settings);
     }
     dispatch('close');
   }
@@ -57,7 +57,9 @@
         settings.game_path = path;
         scheduleSave();
       }
-    } catch {}
+    } catch (e) {
+      console.error('Failed to select game folder:', e);
+    }
   }
 </script>
 

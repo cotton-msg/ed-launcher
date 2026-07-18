@@ -1,2 +1,0 @@
-Error: Could not find or load main class cpw.mods.bootstraplauncher.BootstrapLauncher
-Caused by: java.lang.ClassNotFoundException: cpw.mods.bootstraplauncher.BootstrapLauncher

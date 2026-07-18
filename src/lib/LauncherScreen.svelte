@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { fade } from 'svelte/transition';
   import SettingsDrawer from './SettingsDrawer.svelte';
   import { checkServerStatus, downloadGame, launchGame, onDownloadProgress } from './tauri-api';
   import { open } from '@tauri-apps/plugin-shell';
@@ -35,7 +36,9 @@
   async function refreshStatus() {
     try {
       serverStatus = await checkServerStatus();
-    } catch {}
+    } catch (e) {
+      console.error('Failed to check server status:', e);
+    }
   }
 
   onMount(async () => {
@@ -111,7 +114,9 @@
   async function openLink() {
     try {
       await open('https://t.me/supminerr');
-    } catch {}
+    } catch (e) {
+      console.error('Failed to open link:', e);
+    }
   }
 
   function closeSettings() {
@@ -209,9 +214,7 @@
   on:logout={logout}
 />
 
-<script context="module" lang="ts">
-  import { fade } from 'svelte/transition';
-</script>
+
 
 <style>
   .launcher {

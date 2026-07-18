@@ -30,6 +30,14 @@
     "fs:allow-remove",
     "fs:allow-copy-file",
     "fs:allow-rename",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$HOME/.grandeden/**" },
+        { "path": "$DOWNLOAD/**" }
+      ]
+    },
     "http:default",
     "http:allow-fetch",
     "http:allow-fetch-cancel",
@@ -43,57 +51,6 @@
     "shell:allow-kill",
     "process:default",
     "process:allow-exit",
-    "process:allow-restart",
-    {
-      "identifier": "fs:scope",
-      "allow": [
-        { "path": "$APPDATA/**" },
-        { "path": "$APPDATA/*" },
-        { "path": "$HOME/.grandeden/**" },
-        { "path": "$HOME/.grandeden/*" },
-        { "path": "$DOWNLOAD/**" },
-        { "path": "$DOWNLOAD/*" }
-      ]
-    },
-    {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "name": "java",
-          "cmd": "java",
-          "args": true
-        },
-        {
-          "name": "javaw",
-          "cmd": "javaw",
-          "args": true
-        },
-        {
-          "name": "where",
-          "cmd": "where",
-          "args": true
-        },
-        {
-          "name": "powershell",
-          "cmd": "powershell",
-          "args": true
-        },
-        {
-          "name": "java-full-path",
-          "cmd": "C:\\Program Files\\Java\\jdk-17\\bin\\java.exe",
-          "args": true
-        },
-        {
-          "name": "java-full-path-21",
-          "cmd": "C:\\Program Files\\Java\\jdk-21\\bin\\java.exe",
-          "args": true
-        },
-        {
-          "name": "java-adoptium",
-          "cmd": "C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.19.10-hotspot\\bin\\java.exe",
-          "args": true
-        }
-      ]
-    }
+    "process:allow-restart"
   ]
 }

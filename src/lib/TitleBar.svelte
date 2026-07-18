@@ -6,24 +6,25 @@
   async function checkMaximized() {
     try {
       maximized = await windowIsMaximized();
-    } catch {
+    } catch (e) {
+      console.error('windowIsMaximized failed:', e);
       maximized = false;
     }
   }
 
   async function handleMinimize() {
-    try { await windowMinimize(); } catch {}
+    try { await windowMinimize(); } catch (e) { console.error('windowMinimize failed:', e); }
   }
 
   async function handleMaximize() {
     try {
       await windowMaximize();
       await checkMaximized();
-    } catch {}
+    } catch (e) { console.error('windowMaximize failed:', e); }
   }
 
   async function handleClose() {
-    try { await windowClose(); } catch {}
+    try { await windowClose(); } catch (e) { console.error('windowClose failed:', e); }
   }
 </script>
 
